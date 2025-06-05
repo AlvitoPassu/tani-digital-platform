@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Search, ShoppingCart, User, Bell, Menu, Leaf, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -11,16 +12,17 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
+          <Link to="/" className="flex items-center space-x-2">
             <Leaf className="h-8 w-8 text-green-600" />
             <span className="text-2xl font-bold text-green-800">AgroMart</span>
-          </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-gray-700 hover:text-green-600 transition-colors">Beranda</a>
+            <Link to="/" className="text-gray-700 hover:text-green-600 transition-colors">Beranda</Link>
             <a href="#" className="text-gray-700 hover:text-green-600 transition-colors">Kategori</a>
             <a href="#" className="text-gray-700 hover:text-green-600 transition-colors">Promo</a>
+            <Link to="/dashboard" className="text-gray-700 hover:text-green-600 transition-colors">AI Assistant</Link>
             <a href="#" className="text-gray-700 hover:text-green-600 transition-colors">Bantuan</a>
           </div>
 
@@ -54,9 +56,10 @@ const Navigation = () => {
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-green-200">
           <div className="px-4 py-2 space-y-2">
-            <a href="#" className="block py-2 text-gray-700 hover:text-green-600">Beranda</a>
+            <Link to="/" className="block py-2 text-gray-700 hover:text-green-600">Beranda</Link>
             <a href="#" className="block py-2 text-gray-700 hover:text-green-600">Kategori</a>
             <a href="#" className="block py-2 text-gray-700 hover:text-green-600">Promo</a>
+            <Link to="/dashboard" className="block py-2 text-gray-700 hover:text-green-600">AI Assistant</Link>
             <a href="#" className="block py-2 text-gray-700 hover:text-green-600">Bantuan</a>
           </div>
         </div>
