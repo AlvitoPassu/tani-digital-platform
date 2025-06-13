@@ -1,93 +1,61 @@
-
-import { useState } from "react";
-import Navigation from "@/components/Navigation";
-import ChatBot from "@/components/ChatBot";
+import React from 'react';
+import { useAuth } from '../lib/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Camera, MessageCircle, Calendar, TrendingUp } from "lucide-react";
+import ChatBot from "@/components/ChatBot";
 
-const Dashboard = () => {
+export default function Dashboard() {
+  const { user, logout } = useAuth();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100">
-      <Navigation />
-      
-      <main className="pt-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">AI Agricultural Assistant</h1>
-            <p className="text-gray-600">Asisten cerdas untuk membantu aktivitas pertanian Anda</p>
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Feature Cards */}
-            <div className="lg:col-span-1 space-y-4">
-              <Card className="hover:shadow-lg transition-all duration-300 border-green-200">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Camera className="h-5 w-5 text-green-600" />
-                    Vision AI
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Analisis penyakit tanaman dan hama melalui foto
-                  </p>
-                  <ul className="text-xs text-gray-500 space-y-1">
-                    <li>• Deteksi penyakit otomatis</li>
-                    <li>• Diagnosis dan saran penanganan</li>
-                    <li>• Analisis kesuburan tanaman</li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-lg transition-all duration-300 border-blue-200">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <MessageCircle className="h-5 w-5 text-blue-600" />
-                    Agri Assistant
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Chatbot untuk konsultasi pertanian
-                  </p>
-                  <ul className="text-xs text-gray-500 space-y-1">
-                    <li>• Tips budidaya tanaman</li>
-                    <li>• Rekomendasi pupuk</li>
-                    <li>• Manajemen kebun</li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-lg transition-all duration-300 border-yellow-200">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <TrendingUp className="h-5 w-5 text-yellow-600" />
-                    Crop Planner
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Rekomendasi penanaman berbasis AI
-                  </p>
-                  <ul className="text-xs text-gray-500 space-y-1">
-                    <li>• Analisis tren pasar</li>
-                    <li>• Prediksi cuaca</li>
-                    <li>• Rekomendasi komoditas</li>
-                  </ul>
-                </CardContent>
-              </Card>
+    <div className="min-h-screen bg-gray-100">
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <h1 className="text-xl font-semibold">Tani Digital Platform</h1>
             </div>
+            <div className="flex items-center">
+              <span className="mr-4">Welcome, {user?.name}</span>
+              <button
+                onClick={logout}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
 
-            {/* Chat Interface */}
-            <div className="lg:col-span-2">
-              <ChatBot />
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 p-4">
+            <h2 className="text-2xl font-bold mb-4">Dashboard</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <h3 className="text-lg font-medium">Products</h3>
+                  <p className="mt-1 text-3xl font-semibold">0</p>
+                </div>
+              </div>
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <h3 className="text-lg font-medium">Orders</h3>
+                  <p className="mt-1 text-3xl font-semibold">0</p>
+                </div>
+              </div>
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="p-5">
+                  <h3 className="text-lg font-medium">Revenue</h3>
+                  <p className="mt-1 text-3xl font-semibold">Rp 0</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </main>
     </div>
   );
-};
-
-export default Dashboard;
+}
