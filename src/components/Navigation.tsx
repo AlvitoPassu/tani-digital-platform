@@ -18,8 +18,12 @@ const Navigation = () => {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
+    try {
+      await signOut();
+      navigate("/");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   const getRoleLabel = (role: string) => {
@@ -44,12 +48,12 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             <Link to="/" className="text-gray-700 hover:text-green-600 transition-colors">Beranda</Link>
-            <a href="#" className="text-gray-700 hover:text-green-600 transition-colors">Kategori</a>
-            <a href="#" className="text-gray-700 hover:text-green-600 transition-colors">Promo</a>
+            <button type="button" className="text-gray-700 hover:text-green-600 transition-colors">Kategori</button>
+            <button type="button" className="text-gray-700 hover:text-green-600 transition-colors">Promo</button>
             {user && (
               <Link to="/dashboard" className="text-gray-700 hover:text-green-600 transition-colors">AI Assistant</Link>
             )}
-            <a href="#" className="text-gray-700 hover:text-green-600 transition-colors">Bantuan</a>
+            <button type="button" className="text-gray-700 hover:text-green-600 transition-colors">Bantuan</button>
           </div>
 
           {/* Right Section */}
@@ -110,12 +114,12 @@ const Navigation = () => {
         <div className="md:hidden bg-white border-t border-green-200">
           <div className="px-4 py-2 space-y-2">
             <Link to="/" className="block py-2 text-gray-700 hover:text-green-600">Beranda</Link>
-            <a href="#" className="block py-2 text-gray-700 hover:text-green-600">Kategori</a>
-            <a href="#" className="block py-2 text-gray-700 hover:text-green-600">Promo</a>
+            <button type="button" className="block py-2 text-gray-700 hover:text-green-600 w-full text-left">Kategori</button>
+            <button type="button" className="block py-2 text-gray-700 hover:text-green-600 w-full text-left">Promo</button>
             {user && (
               <Link to="/dashboard" className="block py-2 text-gray-700 hover:text-green-600">AI Assistant</Link>
             )}
-            <a href="#" className="block py-2 text-gray-700 hover:text-green-600">Bantuan</a>
+            <button type="button" className="block py-2 text-gray-700 hover:text-green-600 w-full text-left">Bantuan</button>
             {user && (
               <button onClick={handleSignOut} className="block py-2 text-red-600 hover:text-red-700 w-full text-left">
                 Keluar

@@ -23,27 +23,37 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     
-    const { error } = await signIn(email, password);
-    
-    if (!error) {
-      navigate("/");
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (!error) {
+        navigate("/");
+      }
+    } catch (err) {
+      console.error("Sign in error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
-    const { error } = await signUp(email, password, name, role);
-    
-    if (!error) {
-      // User will need to confirm email before they can log in
-      setEmail("");
-      setPassword("");
-      setName("");
+    try {
+      const { error } = await signUp(email, password, name, role);
+      
+      if (!error) {
+        // User will need to confirm email before they can log in
+        setEmail("");
+        setPassword("");
+        setName("");
+      }
+    } catch (err) {
+      console.error("Sign up error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -75,6 +85,7 @@ const Auth = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="contoh@email.com"
+                    autoComplete="email"
                   />
                 </div>
                 
@@ -87,6 +98,7 @@ const Auth = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     placeholder="••••••••"
+                    autoComplete="current-password"
                   />
                 </div>
                 
@@ -111,6 +123,7 @@ const Auth = () => {
                     onChange={(e) => setName(e.target.value)}
                     required
                     placeholder="Nama lengkap Anda"
+                    autoComplete="name"
                   />
                 </div>
                 
@@ -123,6 +136,7 @@ const Auth = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="contoh@email.com"
+                    autoComplete="email"
                   />
                 </div>
                 
@@ -136,6 +150,7 @@ const Auth = () => {
                     required
                     placeholder="••••••••"
                     minLength={6}
+                    autoComplete="new-password"
                   />
                 </div>
                 
