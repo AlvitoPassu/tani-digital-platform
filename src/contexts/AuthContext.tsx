@@ -56,7 +56,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       if (data) {
-        setProfile(data);
+        // Cast the role to UserRole type since we know it's one of the valid values
+        const profileData: Profile = {
+          ...data,
+          role: data.role as UserRole
+        };
+        setProfile(profileData);
       }
     } catch (error) {
       console.error('Error in fetchProfile:', error);
