@@ -359,6 +359,36 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          id: string
+          name: string | null
+          phone_number: string | null
+          role: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          id: string
+          name?: string | null
+          phone_number?: string | null
+          role: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string | null
+          phone_number?: string | null
+          role?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           comment: string | null
