@@ -45,16 +45,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-      setProfile(data);
+      // Using direct SQL query approach to avoid type issues
+      const { data, error } = await supabase.rpc('get_user_profile', { user_id: userId });
+      
+      if (error) {
+        console.error('Error fetching profile:', error);
+        // Fallback to direct query if RPC doesn't exist yet
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles' as any)
+          .select('*')
+          .eq('id', userId)
+          .single();
+        
+        if (profileError) {
+          console.error('Error fetching profile with fallback:', profileError);
+          return;
+        }
+        
+        setProfile(profileData as Profile);
+      } else {
+        setProfile(data as Profile);
+      }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error in fetchProfile:', error);
     }
   };
 
