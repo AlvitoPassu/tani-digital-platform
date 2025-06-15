@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Leaf, User, Users, UserCheck } from "lucide-react";
+import { DialogDescription } from "@/components/ui/dialog";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -21,13 +22,23 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      alert("Mohon isi email dan password");
+      return;
+    }
+    
     setLoading(true);
+    console.log('Starting sign in process for:', email);
     
     try {
       const { error } = await signIn(email, password);
       
       if (!error) {
+        console.log('Sign in successful, navigating to home');
         navigate("/");
+      } else {
+        console.log('Sign in failed:', error);
       }
     } catch (err) {
       console.error("Sign in error:", err);
@@ -38,16 +49,32 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password || !name) {
+      alert("Mohon isi semua field yang diperlukan");
+      return;
+    }
+    
+    if (password.length < 6) {
+      alert("Password harus minimal 6 karakter");
+      return;
+    }
+    
     setLoading(true);
+    console.log('Starting sign up process for:', email);
     
     try {
       const { error } = await signUp(email, password, name, role);
       
       if (!error) {
-        // User will need to confirm email before they can log in
+        console.log('Sign up successful');
+        // Reset form
         setEmail("");
         setPassword("");
         setName("");
+        setRole("buyer");
+      } else {
+        console.log('Sign up failed:', error);
       }
     } catch (err) {
       console.error("Sign up error:", err);
@@ -65,6 +92,9 @@ const Auth = () => {
             <span className="text-2xl font-bold text-green-800">AgroMart</span>
           </div>
           <CardTitle className="text-xl">Masuk ke Akun Anda</CardTitle>
+          <DialogDescription>
+            Masuk atau daftar untuk mengakses platform AgroMart
+          </DialogDescription>
         </CardHeader>
         
         <CardContent>
@@ -109,6 +139,10 @@ const Auth = () => {
                 >
                   {loading ? "Memproses..." : "Masuk"}
                 </Button>
+                
+                <p className="text-sm text-gray-600 text-center">
+                  Belum punya akun? Klik tab "Daftar" di atas.
+                </p>
               </form>
             </TabsContent>
             
@@ -152,6 +186,7 @@ const Auth = () => {
                     minLength={6}
                     autoComplete="new-password"
                   />
+                  <p className="text-xs text-gray-500">Minimal 6 karakter</p>
                 </div>
                 
                 <div className="space-y-3">
@@ -188,6 +223,10 @@ const Auth = () => {
                 >
                   {loading ? "Memproses..." : "Daftar"}
                 </Button>
+                
+                <p className="text-sm text-gray-600 text-center">
+                  Sudah punya akun? Klik tab "Masuk" di atas.
+                </p>
               </form>
             </TabsContent>
           </Tabs>

@@ -45,6 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -57,12 +58,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       if (data) {
-        // Cast the role to UserRole type since we know it's one of the valid values
         const profileData: Profile = {
           ...data,
           role: data.role as UserRole
         };
+        console.log('Profile fetched successfully:', profileData);
         setProfile(profileData);
+      } else {
+        console.log('No profile found for user:', userId);
       }
     } catch (error) {
       console.error('Error in fetchProfile:', error);
@@ -70,15 +73,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    console.log('Setting up auth state listener...');
+    
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
+        console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Use setTimeout to defer the profile fetch and avoid potential recursive calls
           setTimeout(() => {
             fetchProfile(session.user.id);
           }, 0);
@@ -91,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Then check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session?.user?.id);
+      console.log('Initial session check:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -105,9 +109,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, name: string, role: UserRole) => {
     try {
+      console.log('Attempting to sign up with email:', email);
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -119,17 +124,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
+      console.log('Sign up response:', { data, error });
+
       if (error) {
         console.error('Sign up error:', error);
-        toast({
-          title: "Error Registrasi",
-          description: error.message,
-          variant: "destructive"
-        });
+        if (error.message.includes('User already registered')) {
+          toast({
+            title: "Email Sudah Terdaftar",
+            description: "Email ini sudah terdaftar. Silakan login atau gunakan email lain.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Error Registrasi",
+            description: error.message,
+            variant: "destructive"
+          });
+        }
       } else {
         toast({
           title: "Registrasi Berhasil",
-          description: "Silakan cek email Anda untuk konfirmasi akun",
+          description: "Silakan cek email Anda untuk konfirmasi akun. Jika tidak ada di inbox, cek folder spam.",
         });
       }
 
@@ -147,19 +162,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Attempting to sign in with email:', email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
+      console.log('Sign in response:', { data, error });
+
       if (error) {
         console.error('Sign in error:', error);
-        toast({
-          title: "Error Login",
-          description: error.message,
-          variant: "destructive"
-        });
+        if (error.message.includes('Invalid login credentials')) {
+          toast({
+            title: "Login Gagal",
+            description: "Email atau password salah. Pastikan email sudah dikonfirmasi.",
+            variant: "destructive"
+          });
+        } else if (error.message.includes('Email not confirmed')) {
+          toast({
+            title: "Email Belum Dikonfirmasi",
+            description: "Silakan cek email Anda dan klik link konfirmasi terlebih dahulu.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Error Login",
+            description: error.message,
+            variant: "destructive"
+          });
+        }
       } else {
+        console.log('Login successful for user:', data.user?.email);
         toast({
           title: "Login Berhasil",
           description: "Selamat datang di AgroMart!",
@@ -180,8 +214,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
+      console.log('Signing out...');
       await supabase.auth.signOut();
       setProfile(null);
+      setUser(null);
+      setSession(null);
       toast({
         title: "Logout Berhasil",
         description: "Anda telah keluar dari akun",
