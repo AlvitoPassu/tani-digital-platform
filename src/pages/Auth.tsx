@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Leaf, User, Users, UserCheck } from "lucide-react";
-import { DialogDescription } from "@/components/ui/dialog";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -92,9 +91,9 @@ const Auth = () => {
             <span className="text-2xl font-bold text-green-800">AgroMart</span>
           </div>
           <CardTitle className="text-xl">Masuk ke Akun Anda</CardTitle>
-          <DialogDescription>
+          <p className="text-sm text-muted-foreground">
             Masuk atau daftar untuk mengakses platform AgroMart
-          </DialogDescription>
+          </p>
         </CardHeader>
         
         <CardContent>
