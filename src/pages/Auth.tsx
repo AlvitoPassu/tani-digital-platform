@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Leaf, User, Users, UserCheck } from "lucide-react";
 
 const Auth = () => {
@@ -188,31 +188,33 @@ const Auth = () => {
                   <p className="text-xs text-gray-500">Minimal 6 karakter</p>
                 </div>
                 
-                <div className="space-y-3">
-                  <Label>Pilih Role Anda</Label>
-                  <RadioGroup value={role} onValueChange={(value) => setRole(value as UserRole)}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="buyer" id="buyer" />
-                      <Label htmlFor="buyer" className="flex items-center space-x-2 cursor-pointer">
-                        <User className="h-4 w-4" />
-                        <span>Pembeli - Membeli produk pertanian</span>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="farmer" id="farmer" />
-                      <Label htmlFor="farmer" className="flex items-center space-x-2 cursor-pointer">
-                        <Users className="h-4 w-4" />
-                        <span>Petani - Menjual produk pertanian</span>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="admin" id="admin" />
-                      <Label htmlFor="admin" className="flex items-center space-x-2 cursor-pointer">
-                        <UserCheck className="h-4 w-4" />
-                        <span>Admin - Mengelola platform</span>
-                      </Label>
-                    </div>
-                  </RadioGroup>
+                <div className="space-y-2">
+                  <Label htmlFor="role-select">Pilih Role Anda</Label>
+                  <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih role..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="buyer">
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4" />
+                          <span>Pembeli - Membeli produk pertanian</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="farmer">
+                        <div className="flex items-center space-x-2">
+                          <Users className="h-4 w-4" />
+                          <span>Petani - Menjual produk pertanian</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="admin">
+                        <div className="flex items-center space-x-2">
+                          <UserCheck className="h-4 w-4" />
+                          <span>Admin - Mengelola platform</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <Button 
