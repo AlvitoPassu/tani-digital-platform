@@ -2,6 +2,8 @@
 import { Star, MapPin, ShoppingCart, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Product {
   id: number;
@@ -22,6 +24,9 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
+  const { user } = useAuth();
+  const { addToCart, isAddingToCart } = useCart();
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -44,6 +49,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
       case 'electric': return 'bg-yellow-500';
       default: return 'bg-gray-500';
     }
+  };
+
+  const handleAddToCart = () => {
+    if (!user) {
+      alert("Silakan login terlebih dahulu untuk menambahkan produk ke keranjang");
+      return;
+    }
+    addToCart({ productId: product.id, quantity: 1 });
   };
 
   return (
@@ -113,9 +126,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
         </div>
 
         {/* Add to Cart Button */}
-        <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
+        <Button 
+          className="w-full bg-green-600 hover:bg-green-700 text-white"
+          onClick={handleAddToCart}
+          disabled={isAddingToCart}
+        >
           <ShoppingCart className="h-4 w-4 mr-2" />
-          Tambah ke Keranjang
+          {isAddingToCart ? "Menambahkan..." : "Tambah ke Keranjang"}
         </Button>
       </CardContent>
     </Card>

@@ -9,6 +9,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
+import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,10 @@ const App = () => (
                   <Dashboard />
                 </ProtectedRoute>
               } 
+            />
+            <Route 
+              path="/cart" 
+              element={<Cart />} 
             />
             <Route 
               path="/auth" 

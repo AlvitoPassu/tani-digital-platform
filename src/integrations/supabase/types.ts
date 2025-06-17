@@ -50,6 +50,33 @@ export type Database = {
           },
         ]
       }
+      cart: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: number
+          quantity: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: number
+          quantity?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: number
+          quantity?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       crop_calendar: {
         Row: {
           actual_harvest_date: string | null
@@ -502,7 +529,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      upsert_cart_item: {
+        Args: { p_user_id: string; p_product_id: number; p_quantity: number }
+        Returns: undefined
+      }
     }
     Enums: {
       article_status: "draft" | "published" | "archived"
