@@ -137,3 +137,40 @@ CREATE TABLE notifications (
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Create cart table
+CREATE TABLE IF NOT EXISTS cart (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+    quantity INTEGER NOT NULL DEFAULT 1,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS cart_user_id_idx ON cart(user_id);
+CREATE INDEX IF NOT EXISTS cart_product_id_idx ON cart(product_id);
+
+-- Add RLS (Row Level Security) policies
+ALTER TABLE cart ENABLE ROW LEVEL SECURITY;
+
+-- Policy for users to view their own cart
+CREATE POLICY "Users can view their own cart"
+    ON cart FOR SELECT
+    USING (auth.uid() = user_id);
+
+-- Policy for users to insert their own cart items
+CREATE POLICY "Users can insert their own cart items"
+    ON cart FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+-- Policy for users to update their own cart items
+CREATE POLICY "Users can update their own cart items"
+    ON cart FOR UPDATE
+    USING (auth.uid() = user_id);
+
+-- Policy for users to delete their own cart items
+CREATE POLICY "Users can delete their own cart items"
+    ON cart FOR DELETE
+    USING (auth.uid() = user_id);
