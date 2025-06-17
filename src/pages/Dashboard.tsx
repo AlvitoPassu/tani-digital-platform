@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import ChatBot from "@/components/ChatBot";
+import CartSection from "@/components/CartSection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Camera, MessageCircle, Calendar, TrendingUp } from "lucide-react";
@@ -18,7 +19,7 @@ const Dashboard = () => {
             <p className="text-gray-600">Asisten cerdas untuk membantu aktivitas pertanian Anda</p>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-6">
+          <div className="grid lg:grid-cols-4 gap-6">
             {/* Feature Cards */}
             <div className="lg:col-span-1 space-y-4">
               <Card className="hover:shadow-lg transition-all duration-300 border-green-200">
@@ -77,10 +78,13 @@ const Dashboard = () => {
                   </ul>
                 </CardContent>
               </Card>
+
+              {/* Cart Section */}
+              <CartSection />
             </div>
 
             {/* Chat Interface */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-3">
               <ChatBot />
             </div>
           </div>
