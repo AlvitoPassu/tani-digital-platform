@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Leaf, User, Users, UserCheck } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -18,12 +19,31 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
-      alert("Mohon isi email dan password");
+      toast({
+        title: "Form Tidak Lengkap",
+        description: "Mohon isi email dan password",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      toast({
+        title: "Email Tidak Valid",
+        description: "Mohon masukkan alamat email yang valid",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -41,6 +61,11 @@ const Auth = () => {
       }
     } catch (err) {
       console.error("Sign in error:", err);
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan yang tidak terduga",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -50,12 +75,38 @@ const Auth = () => {
     e.preventDefault();
     
     if (!email || !password || !name) {
-      alert("Mohon isi semua field yang diperlukan");
+      toast({
+        title: "Form Tidak Lengkap",
+        description: "Mohon isi semua field yang diperlukan",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      toast({
+        title: "Email Tidak Valid",
+        description: "Mohon masukkan alamat email yang valid",
+        variant: "destructive"
+      });
       return;
     }
     
     if (password.length < 6) {
-      alert("Password harus minimal 6 karakter");
+      toast({
+        title: "Password Terlalu Pendek",
+        description: "Password harus minimal 6 karakter",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (name.trim().length < 2) {
+      toast({
+        title: "Nama Terlalu Pendek",
+        description: "Nama harus minimal 2 karakter",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -63,7 +114,7 @@ const Auth = () => {
     console.log('Starting sign up process for:', email);
     
     try {
-      const { error } = await signUp(email, password, name, role);
+      const { error } = await signUp(email, password, name.trim(), role);
       
       if (!error) {
         console.log('Sign up successful');
@@ -77,6 +128,11 @@ const Auth = () => {
       }
     } catch (err) {
       console.error("Sign up error:", err);
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan yang tidak terduga",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -111,10 +167,11 @@ const Auth = () => {
                     id="signin-email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value.trim())}
                     required
                     placeholder="contoh@email.com"
                     autoComplete="email"
+                    disabled={loading}
                   />
                 </div>
                 
@@ -128,6 +185,7 @@ const Auth = () => {
                     required
                     placeholder="••••••••"
                     autoComplete="current-password"
+                    disabled={loading}
                   />
                 </div>
                 
@@ -157,6 +215,7 @@ const Auth = () => {
                     required
                     placeholder="Nama lengkap Anda"
                     autoComplete="name"
+                    disabled={loading}
                   />
                 </div>
                 
@@ -166,10 +225,11 @@ const Auth = () => {
                     id="signup-email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value.trim())}
                     required
                     placeholder="contoh@email.com"
                     autoComplete="email"
+                    disabled={loading}
                   />
                 </div>
                 
@@ -184,13 +244,14 @@ const Auth = () => {
                     placeholder="••••••••"
                     minLength={6}
                     autoComplete="new-password"
+                    disabled={loading}
                   />
                   <p className="text-xs text-gray-500">Minimal 6 karakter</p>
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="role-select">Pilih Role Anda</Label>
-                  <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
+                  <Select value={role} onValueChange={(value) => setRole(value as UserRole)} disabled={loading}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Pilih role..." />
                     </SelectTrigger>
