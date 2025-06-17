@@ -34,26 +34,49 @@ export const useCart = () => {
     queryFn: async () => {
       if (!user) return [];
       
-      const { data, error } = await supabase
+      // First get cart items
+      const { data: cartData, error: cartError } = await supabase
         .from('cart')
-        .select(`
-          *,
-          product:products(
-            id,
-            name,
-            price,
-            image_url,
-            unit
-          )
-        `)
+        .select('*')
         .eq('user_id', user.id);
 
-      if (error) {
-        console.error('Error fetching cart:', error);
-        throw error;
+      if (cartError) {
+        console.error('Error fetching cart:', cartError);
+        throw cartError;
       }
 
-      return data as CartItemWithProduct[];
+      if (!cartData || cartData.length === 0) {
+        return [];
+      }
+
+      // Then get products for these cart items
+      const productIds = cartData.map(item => item.product_id);
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('id, name, price, image_url, unit')
+        .in('id', productIds);
+
+      if (productsError) {
+        console.error('Error fetching products:', productsError);
+        throw productsError;
+      }
+
+      // Combine cart items with product data
+      const cartWithProducts = cartData.map(cartItem => {
+        const product = productsData?.find(p => p.id === cartItem.product_id);
+        return {
+          ...cartItem,
+          product: product || {
+            id: cartItem.product_id,
+            name: 'Product not found',
+            price: 0,
+            image_url: null,
+            unit: 'pcs'
+          }
+        };
+      });
+
+      return cartWithProducts as CartItemWithProduct[];
     },
     enabled: !!user,
   });
@@ -187,7 +210,7 @@ export const useCart = () => {
     totalItems,
     totalPrice,
     addToCart: addToCartMutation.mutate,
-    updateQuantity: updateQuantityMutation.mutate,
+    updateQuantity: (itemId: string, quantity: number) => updateQuantityMutation.mutate({ itemId, quantity }),
     removeFromCart: removeFromCartMutation.mutate,
     clearCart: clearCartMutation.mutate,
     isAddingToCart: addToCartMutation.isPending,
