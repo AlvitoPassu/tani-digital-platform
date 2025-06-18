@@ -73,51 +73,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    let isMounted = true;
+    
     console.log('Setting up auth state listener...');
     
-    // Set up auth state listener first
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
+        console.log('Auth state changed:', event, session?.user?.email || 'no user');
+        
+        if (!isMounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Use setTimeout to prevent potential deadlock
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-          }, 0);
+          fetchProfile(session.user.id);
         } else {
           setProfile(null);
         }
+        
         setLoading(false);
       }
     );
 
-    // Then check for existing session
+    // Get initial session
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
+        
         if (error) {
           console.error('Error getting session:', error);
         } else {
-          console.log('Initial session check:', session?.user?.email);
-          setSession(session);
-          setUser(session?.user ?? null);
-          if (session?.user) {
-            fetchProfile(session.user.id);
+          console.log('Initial session check:', session?.user?.email || 'no session');
+          
+          if (isMounted) {
+            setSession(session);
+            setUser(session?.user ?? null);
+            
+            if (session?.user) {
+              await fetchProfile(session.user.id);
+            }
+            
+            setLoading(false);
           }
         }
       } catch (error) {
         console.error('Error in getInitialSession:', error);
-      } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     getInitialSession();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, name: string, role: UserRole) => {
@@ -141,36 +155,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Sign up error:', error);
-        if (error.message.includes('User already registered')) {
-          toast({
-            title: "Email Sudah Terdaftar",
-            description: "Email ini sudah terdaftar. Silakan login atau gunakan email lain.",
-            variant: "destructive"
-          });
-        } else if (error.message.includes('Invalid email')) {
-          toast({
-            title: "Email Tidak Valid",
-            description: "Mohon masukkan alamat email yang valid.",
-            variant: "destructive"
-          });
-        } else if (error.message.includes('Password should be at least 6 characters')) {
-          toast({
-            title: "Password Terlalu Pendek",
-            description: "Password harus minimal 6 karakter.",
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Error Registrasi",
-            description: error.message,
-            variant: "destructive"
-          });
-        }
+        toast({
+          title: "Error Registrasi",
+          description: error.message,
+          variant: "destructive"
+        });
       } else {
         if (data.user && !data.user.email_confirmed_at) {
           toast({
             title: "Registrasi Berhasil",
-            description: "Silakan cek email Anda untuk konfirmasi akun. Jika tidak ada di inbox, cek folder spam.",
+            description: "Silakan cek email Anda untuk konfirmasi akun.",
           });
         } else {
           toast({
@@ -185,7 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Sign up catch error:', error);
       toast({
         title: "Error",
-        description: "Terjadi kesalahan saat registrasi. Silakan coba lagi.",
+        description: "Terjadi kesalahan saat registrasi.",
         variant: "destructive"
       });
       return { error };
@@ -205,37 +199,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Sign in error:', error);
-        if (error.message.includes('Invalid login credentials')) {
-          toast({
-            title: "Login Gagal",
-            description: "Email atau password salah. Pastikan email sudah dikonfirmasi.",
-            variant: "destructive"
-          });
-        } else if (error.message.includes('Email not confirmed')) {
-          toast({
-            title: "Email Belum Dikonfirmasi",
-            description: "Silakan cek email Anda dan klik link konfirmasi terlebih dahulu.",
-            variant: "destructive"
-          });
-        } else if (error.message.includes('Invalid email')) {
-          toast({
-            title: "Email Tidak Valid",
-            description: "Mohon masukkan alamat email yang valid.",
-            variant: "destructive"
-          });
-        } else if (error.message.includes('Signup requires a valid password')) {
-          toast({
-            title: "Password Diperlukan",
-            description: "Mohon masukkan password Anda.",
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Error Login",
-            description: error.message,
-            variant: "destructive"
-          });
-        }
+        toast({
+          title: "Login Gagal",
+          description: "Email atau password salah.",
+          variant: "destructive"
+        });
       } else {
         console.log('Login successful for user:', data.user?.email);
         toast({
@@ -249,7 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Sign in catch error:', error);
       toast({
         title: "Error",
-        description: "Terjadi kesalahan saat login. Silakan coba lagi.",
+        description: "Terjadi kesalahan saat login.",
         variant: "destructive"
       });
       return { error };

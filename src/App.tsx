@@ -26,14 +26,18 @@ const App = () => (
             <Route 
               path="/dashboard" 
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requireAuth={true}>
                   <Dashboard />
                 </ProtectedRoute>
               } 
             />
             <Route 
               path="/cart" 
-              element={<Cart />} 
+              element={
+                <ProtectedRoute requireAuth={true}>
+                  <Cart />
+                </ProtectedRoute>
+              } 
             />
             <Route 
               path="/auth" 

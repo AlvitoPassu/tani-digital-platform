@@ -19,6 +19,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAuth =
     userEmail: user?.email 
   });
 
+  // Show loading spinner while checking authentication
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100">
@@ -30,16 +31,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAuth =
     );
   }
 
-  // For pages that require authentication
+  // For pages that require authentication (like dashboard)
   if (requireAuth && (!user || !session)) {
     console.log('Redirecting to auth - no user or session');
     return <Navigate to="/auth" replace />;
   }
 
-  // For pages that should redirect if user is already logged in (like /auth)
+  // For pages that should redirect if user is already logged in (like /auth page)
   if (!requireAuth && user && session) {
-    console.log('Redirecting to home - user already logged in');
-    return <Navigate to="/" replace />;
+    console.log('Redirecting to dashboard - user already logged in');
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
