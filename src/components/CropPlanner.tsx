@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, Cloud, MapPin, Calendar, DollarSign } from "lucide-react";
+import { TrendingUp, Cloud, MapPin, Calendar, DollarSign, Loader } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const CropPlanner = () => {
   const [formData, setFormData] = useState({
@@ -35,78 +36,38 @@ const CropPlanner = () => {
 
     setIsAnalyzing(true);
 
-    // Simulasi analisis AI
-    setTimeout(() => {
-      const mockRecommendations = {
-        topCrops: [
-          {
-            name: "Jagung Hibrida",
-            profit: 85,
-            season: "Musim Kemarau",
-            duration: "90-100 hari",
-            investment: "Rp 8-12 juta/ha",
-            expectedReturn: "Rp 20-25 juta/ha",
-            marketTrend: "Naik 12% (5 tahun terakhir)",
-            weatherSuitability: 92
-          },
-          {
-            name: "Kedelai Edamame",
-            profit: 78,
-            season: "Musim Hujan",
-            duration: "75-85 hari",
-            investment: "Rp 6-9 juta/ha",
-            expectedReturn: "Rp 15-20 juta/ha",
-            marketTrend: "Naik 18% (ekspor meningkat)",
-            weatherSuitability: 88
-          },
-          {
-            name: "Cabai Rawit",
-            profit: 72,
-            season: "Sepanjang tahun",
-            duration: "90-120 hari",
-            investment: "Rp 15-20 juta/ha",
-            expectedReturn: "Rp 35-45 juta/ha",
-            marketTrend: "Stabil (permintaan tinggi)",
-            weatherSuitability: 85
-          }
-        ],
-        weatherForecast: {
-          season: formData.season,
-          rainfall: formData.season === 'musim-hujan' ? "250-300mm/bulan" : "50-100mm/bulan",
-          temperature: "26-32°C",
-          humidity: "70-85%",
-          recommendation: formData.season === 'musim-hujan' 
-            ? "Ideal untuk tanaman yang membutuhkan air tinggi"
-            : "Cocok untuk tanaman tahan kering dengan irigasi"
-        },
-        soilAnalysis: {
-          type: formData.soilType,
-          suitability: formData.soilType === 'lempung' ? "Sangat baik" : "Baik",
-          nutrients: "N: Sedang, P: Tinggi, K: Sedang",
-          ph: "6.2 (optimal)",
-          recommendations: [
-            "Aplikasi pupuk organik 2 ton/ha",
-            "Tambahkan kapur jika pH < 6.0",
-            "Rotasi tanaman legum untuk nitrogen"
-          ]
-        }
-      };
+    try {
+      const { data, error } = await supabase.functions.invoke('crop-planner', {
+        body: formData
+      });
 
-      setRecommendations(mockRecommendations);
-      setIsAnalyzing(false);
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      setRecommendations(data);
 
       toast({
         title: "Analisis Selesai",
-        description: "Rekomendasi penanaman telah dibuat berdasarkan data Anda",
+        description: "Rekomendasi penanaman dari OpenAI telah dibuat berdasarkan data Anda",
       });
-    }, 3000);
+    } catch (error) {
+      console.error('Error generating recommendations:', error);
+      toast({
+        title: "Error",
+        description: "Gagal membuat rekomendasi. Pastikan API key OpenAI sudah dikonfigurasi.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (
     <div className="h-full flex flex-col">
       <div className="p-6 border-b">
-        <h3 className="text-lg font-semibold mb-2">AI Crop Planner</h3>
-        <p className="text-sm text-gray-600">Rekomendasi penanaman berdasarkan cuaca, pasar, dan kondisi lahan</p>
+        <h3 className="text-lg font-semibold mb-2">AI Crop Planner (OpenAI)</h3>
+        <p className="text-sm text-gray-600">Rekomendasi penanaman berdasarkan AI analysis dari OpenAI</p>
       </div>
 
       <div className="flex-1 p-6 overflow-y-auto space-y-6">
@@ -127,6 +88,7 @@ const CropPlanner = () => {
                   placeholder="e.g. Bogor, Jawa Barat"
                   value={formData.location}
                   onChange={(e) => handleInputChange('location', e.target.value)}
+                  disabled={isAnalyzing}
                 />
               </div>
               <div className="space-y-2">
@@ -137,6 +99,7 @@ const CropPlanner = () => {
                   placeholder="e.g. 2"
                   value={formData.landSize}
                   onChange={(e) => handleInputChange('landSize', e.target.value)}
+                  disabled={isAnalyzing}
                 />
               </div>
             </div>
@@ -144,7 +107,7 @@ const CropPlanner = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Jenis Tanah</Label>
-                <Select onValueChange={(value) => handleInputChange('soilType', value)}>
+                <Select onValueChange={(value) => handleInputChange('soilType', value)} disabled={isAnalyzing}>
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih jenis tanah" />
                   </SelectTrigger>
@@ -159,7 +122,7 @@ const CropPlanner = () => {
               </div>
               <div className="space-y-2">
                 <Label>Musim Tanam</Label>
-                <Select onValueChange={(value) => handleInputChange('season', value)}>
+                <Select onValueChange={(value) => handleInputChange('season', value)} disabled={isAnalyzing}>
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih musim tanam" />
                   </SelectTrigger>
@@ -179,13 +142,13 @@ const CropPlanner = () => {
             >
               {isAnalyzing ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Menganalisis Data...
+                  <Loader className="h-4 w-4 mr-2 animate-spin" />
+                  AI sedang menganalisis data...
                 </>
               ) : (
                 <>
                   <TrendingUp className="h-4 w-4 mr-2" />
-                  Buat Rekomendasi
+                  Buat Rekomendasi dengan OpenAI
                 </>
               )}
             </Button>
@@ -200,11 +163,11 @@ const CropPlanner = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-green-600" />
-                  Rekomendasi Komoditas Terbaik
+                  Rekomendasi Komoditas Terbaik (Powered by OpenAI)
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {recommendations.topCrops.map((crop: any, index: number) => (
+                {recommendations.topCrops?.map((crop: any, index: number) => (
                   <div key={index} className="border rounded-lg p-4 space-y-3">
                     <div className="flex justify-between items-start">
                       <h4 className="font-semibold text-lg">{crop.name}</h4>
@@ -232,7 +195,7 @@ const CropPlanner = () => {
                     
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span>Tren Pasar (5 tahun):</span>
+                        <span>Tren Pasar:</span>
                         <span className="text-green-600 font-medium">{crop.marketTrend}</span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
@@ -263,12 +226,12 @@ const CropPlanner = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div><span className="font-medium">Curah Hujan:</span> {recommendations.weatherForecast.rainfall}</div>
-                  <div><span className="font-medium">Suhu:</span> {recommendations.weatherForecast.temperature}</div>
-                  <div><span className="font-medium">Kelembaban:</span> {recommendations.weatherForecast.humidity}</div>
+                  <div><span className="font-medium">Curah Hujan:</span> {recommendations.weatherForecast?.rainfall}</div>
+                  <div><span className="font-medium">Suhu:</span> {recommendations.weatherForecast?.temperature}</div>
+                  <div><span className="font-medium">Kelembaban:</span> {recommendations.weatherForecast?.humidity}</div>
                 </div>
                 <div className="bg-blue-50 p-3 rounded-lg">
-                  <p className="text-sm text-blue-800">{recommendations.weatherForecast.recommendation}</p>
+                  <p className="text-sm text-blue-800">{recommendations.weatherForecast?.recommendation}</p>
                 </div>
               </CardContent>
             </Card>
@@ -283,22 +246,24 @@ const CropPlanner = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div><span className="font-medium">Jenis Tanah:</span> {recommendations.soilAnalysis.type}</div>
-                  <div><span className="font-medium">Kesesuaian:</span> {recommendations.soilAnalysis.suitability}</div>
-                  <div><span className="font-medium">Nutrisi:</span> {recommendations.soilAnalysis.nutrients}</div>
-                  <div><span className="font-medium">pH:</span> {recommendations.soilAnalysis.ph}</div>
+                  <div><span className="font-medium">Jenis Tanah:</span> {recommendations.soilAnalysis?.type}</div>
+                  <div><span className="font-medium">Kesesuaian:</span> {recommendations.soilAnalysis?.suitability}</div>
+                  <div><span className="font-medium">Nutrisi:</span> {recommendations.soilAnalysis?.nutrients}</div>
+                  <div><span className="font-medium">pH:</span> {recommendations.soilAnalysis?.ph}</div>
                 </div>
-                <div>
-                  <h4 className="font-medium mb-2">Rekomendasi Perbaikan Tanah:</h4>
-                  <ul className="space-y-1">
-                    {recommendations.soilAnalysis.recommendations.map((rec: string, index: number) => (
-                      <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
-                        <span className="text-green-600 mt-1">•</span>
-                        {rec}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {recommendations.soilAnalysis?.recommendations && (
+                  <div>
+                    <h4 className="font-medium mb-2">Rekomendasi Perbaikan Tanah:</h4>
+                    <ul className="space-y-1">
+                      {recommendations.soilAnalysis.recommendations.map((rec: string, index: number) => (
+                        <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
+                          <span className="text-green-600 mt-1">•</span>
+                          {rec}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
