@@ -186,9 +186,8 @@ const VisionAI = () => {
                       </ul>
                     </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             )}
           </div>
         )}
