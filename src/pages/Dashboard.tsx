@@ -4,7 +4,7 @@ import Navigation from "@/components/Navigation";
 import ChatBot from "@/components/ChatBot";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Camera, MessageCircle, Calendar, TrendingUp } from "lucide-react";
+import { Camera, MessageCircle, Calendar, TrendingUp, Sparkles } from "lucide-react";
 
 const Dashboard = () => {
   return (
@@ -44,17 +44,36 @@ const Dashboard = () => {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <MessageCircle className="h-5 w-5 text-blue-600" />
-                    Agri Assistant
+                    OpenAI Assistant
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-gray-600 mb-3">
-                    Chatbot untuk konsultasi pertanian
+                    Chatbot powered by OpenAI GPT
                   </p>
                   <ul className="text-xs text-gray-500 space-y-1">
                     <li>• Tips budidaya tanaman</li>
                     <li>• Rekomendasi pupuk</li>
                     <li>• Manajemen kebun</li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-lg transition-all duration-300 border-purple-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Sparkles className="h-5 w-5 text-purple-600" />
+                    Gemini Assistant
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Chatbot powered by Google Gemini
+                  </p>
+                  <ul className="text-xs text-gray-500 space-y-1">
+                    <li>• Konsultasi pertanian</li>
+                    <li>• Teknologi terkini</li>
+                    <li>• Solusi inovatif</li>
                   </ul>
                 </CardContent>
               </Card>
@@ -79,18 +98,15 @@ const Dashboard = () => {
               </Card>
 
               {/* Quick Access Card */}
-              <Card className="hover:shadow-lg transition-all duration-300 border-purple-200">
+              <Card className="hover:shadow-lg transition-all duration-300 border-indigo-200">
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <Calendar className="h-5 w-5 text-purple-600" />
+                    <Calendar className="h-5 w-5 text-indigo-600" />
                     Akses Cepat
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    <a href="/cart" className="block text-sm text-gray-600 hover:text-green-600 transition-colors">
-                      🛒 Keranjang Belanja
-                    </a>
                     <a href="/" className="block text-sm text-gray-600 hover:text-green-600 transition-colors">
                       🏠 Kembali ke Beranda
                     </a>

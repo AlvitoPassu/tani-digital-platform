@@ -2,12 +2,10 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Send, Camera, MessageCircle, TrendingUp, Upload } from "lucide-react";
+import { Camera, MessageCircle, TrendingUp, Sparkles } from "lucide-react";
 import VisionAI from "./VisionAI";
 import AgriAssistant from "./AgriAssistant";
+import GeminiAssistant from "./GeminiAssistant";
 import CropPlanner from "./CropPlanner";
 
 const ChatBot = () => {
@@ -24,14 +22,18 @@ const ChatBot = () => {
       
       <CardContent className="p-0 h-full">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-3 rounded-none border-b">
+          <TabsList className="grid w-full grid-cols-4 rounded-none border-b">
             <TabsTrigger value="vision" className="flex items-center gap-2">
               <Camera className="h-4 w-4" />
               Vision AI
             </TabsTrigger>
             <TabsTrigger value="assistant" className="flex items-center gap-2">
               <MessageCircle className="h-4 w-4" />
-              Chat Assistant
+              OpenAI Chat
+            </TabsTrigger>
+            <TabsTrigger value="gemini" className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              Gemini Chat
             </TabsTrigger>
             <TabsTrigger value="planner" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
@@ -46,6 +48,10 @@ const ChatBot = () => {
             
             <TabsContent value="assistant" className="h-full m-0">
               <AgriAssistant />
+            </TabsContent>
+            
+            <TabsContent value="gemini" className="h-full m-0">
+              <GeminiAssistant />
             </TabsContent>
             
             <TabsContent value="planner" className="h-full m-0">
