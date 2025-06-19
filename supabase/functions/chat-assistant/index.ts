@@ -21,6 +21,19 @@ serve(async (req) => {
       throw new Error('No message provided');
     }
 
+    if (!openAIApiKey) {
+      console.error('OpenAI API key not found');
+      return new Response(JSON.stringify({ 
+        error: 'API key OpenAI belum dikonfigurasi. Silakan hubungi administrator.',
+        details: 'Missing OpenAI API key' 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('Sending request to OpenAI with message:', message.substring(0, 100));
+
     const messages = [
       {
         role: 'system',
@@ -51,7 +64,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4o-mini',
         messages: messages,
         max_tokens: 1500,
         temperature: 0.7,
@@ -60,12 +73,38 @@ serve(async (req) => {
       }),
     });
 
+    console.log('OpenAI API response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      const errorData = await response.text();
+      console.error('OpenAI API error details:', errorData);
+      
+      let errorMessage = 'Terjadi kesalahan saat menghubungi AI assistant.';
+      
+      if (response.status === 429) {
+        errorMessage = 'API OpenAI sedang sibuk atau quota habis. Silakan coba lagi dalam beberapa menit.';
+      } else if (response.status === 401) {
+        errorMessage = 'API key OpenAI tidak valid. Silakan hubungi administrator.';
+      } else if (response.status === 400) {
+        errorMessage = 'Format permintaan tidak valid. Silakan coba dengan pesan yang lebih sederhana.';
+      } else if (response.status >= 500) {
+        errorMessage = 'Server OpenAI sedang mengalami masalah. Silakan coba lagi nanti.';
+      }
+      
+      return new Response(JSON.stringify({ 
+        error: errorMessage,
+        details: `OpenAI API error: ${response.status}`,
+        status: response.status 
+      }), {
+        status: response.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const data = await response.json();
     const botResponse = data.choices[0].message.content;
+
+    console.log('Successfully generated response, length:', botResponse.length);
 
     return new Response(JSON.stringify({ 
       response: botResponse,
@@ -76,8 +115,17 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in chat-assistant function:', error);
+    
+    let errorMessage = 'Gagal memproses pesan Anda.';
+    
+    if (error.message.includes('fetch')) {
+      errorMessage = 'Tidak dapat terhubung ke server OpenAI. Periksa koneksi internet.';
+    } else if (error.message.includes('JSON')) {
+      errorMessage = 'Format data tidak valid. Silakan coba lagi.';
+    }
+    
     return new Response(JSON.stringify({ 
-      error: 'Gagal memproses pesan',
+      error: errorMessage,
       details: error.message 
     }), {
       status: 500,

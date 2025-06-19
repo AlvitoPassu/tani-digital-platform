@@ -3,14 +3,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Send, Bot, User, Loader } from "lucide-react";
+import { Send, Bot, User, Loader, AlertCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Message {
   id: string;
-  type: 'user' | 'bot';
+  type: 'user' | 'bot' | 'error';
   content: string;
   timestamp: Date;
 }
@@ -56,6 +57,8 @@ const AgriAssistant = () => {
         content: msg.content
       }));
 
+      console.log('Sending message to chat-assistant function:', message);
+
       const { data, error } = await supabase.functions.invoke('chat-assistant', {
         body: { 
           message: message,
@@ -64,7 +67,28 @@ const AgriAssistant = () => {
       });
 
       if (error) {
-        throw new Error(error.message);
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Function invocation failed');
+      }
+
+      if (data.error) {
+        console.error('OpenAI API error:', data);
+        
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'error',
+          content: data.error,
+          timestamp: new Date()
+        };
+
+        setMessages(prev => [...prev, errorMessage]);
+        
+        toast({
+          title: "Error",
+          description: data.error,
+          variant: "destructive"
+        });
+        return;
       }
 
       const botMessage: Message = {
@@ -79,10 +103,20 @@ const AgriAssistant = () => {
     } catch (error) {
       console.error('Error sending message:', error);
       
+      let errorText = 'Maaf, terjadi kesalahan saat memproses pesan Anda.';
+      
+      if (error.message.includes('Failed to fetch')) {
+        errorText = 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+      } else if (error.message.includes('429')) {
+        errorText = 'API sedang sibuk. Silakan tunggu beberapa menit dan coba lagi.';
+      } else if (error.message.includes('401')) {
+        errorText = 'API key tidak valid. Hubungi administrator.';
+      }
+      
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        type: 'bot',
-        content: 'Maaf, terjadi kesalahan saat memproses pesan Anda. Pastikan API key OpenAI sudah dikonfigurasi dengan benar.',
+        type: 'error',
+        content: errorText,
         timestamp: new Date()
       };
 
@@ -90,7 +124,7 @@ const AgriAssistant = () => {
       
       toast({
         title: "Error",
-        description: "Gagal mengirim pesan. Periksa koneksi dan konfigurasi API.",
+        description: errorText,
         variant: "destructive"
       });
     } finally {
@@ -130,10 +164,14 @@ const AgriAssistant = () => {
               <div className={`p-2 rounded-full ${
                 message.type === 'user' 
                   ? 'bg-green-100 text-green-700' 
+                  : message.type === 'error'
+                  ? 'bg-red-100 text-red-700'
                   : 'bg-blue-100 text-blue-700'
               }`}>
                 {message.type === 'user' ? (
                   <User className="h-4 w-4" />
+                ) : message.type === 'error' ? (
+                  <AlertCircle className="h-4 w-4" />
                 ) : (
                   <Bot className="h-4 w-4" />
                 )}
@@ -141,15 +179,23 @@ const AgriAssistant = () => {
               <div className={`max-w-[80%] ${
                 message.type === 'user' ? 'text-right' : 'text-left'
               }`}>
-                <Card className={`${
-                  message.type === 'user'
-                    ? 'bg-green-500 text-white'
-                    : 'bg-white border-gray-200'
-                }`}>
-                  <CardContent className="p-3">
-                    <p className="text-sm whitespace-pre-line">{message.content}</p>
-                  </CardContent>
-                </Card>
+                {message.type === 'error' ? (
+                  <Alert variant="destructive">
+                    <AlertDescription className="text-sm">
+                      {message.content}
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <Card className={`${
+                    message.type === 'user'
+                      ? 'bg-green-500 text-white'
+                      : 'bg-white border-gray-200'
+                  }`}>
+                    <CardContent className="p-3">
+                      <p className="text-sm whitespace-pre-line">{message.content}</p>
+                    </CardContent>
+                  </Card>
+                )}
                 <p className="text-xs text-gray-500 mt-1">
                   {message.timestamp.toLocaleTimeString()}
                 </p>
