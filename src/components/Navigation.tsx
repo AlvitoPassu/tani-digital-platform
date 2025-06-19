@@ -4,6 +4,7 @@ import { Search, ShoppingCart, User, Bell, Menu, Leaf, X, LogOut } from "lucide-
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/hooks/useCart";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +16,7 @@ import {
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, profile, signOut } = useAuth();
+  const { totalItems } = useCart();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -63,10 +65,18 @@ const Navigation = () => {
                 <Button variant="ghost" size="icon" className="hidden md:flex">
                   <Bell className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="relative">
-                  <ShoppingCart className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">2</span>
-                </Button>
+                
+                {/* Cart Button - Available for all users */}
+                <Link to="/cart">
+                  <Button variant="ghost" size="icon" className="relative">
+                    <ShoppingCart className="h-5 w-5" />
+                    {totalItems > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {totalItems}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -89,11 +99,23 @@ const Navigation = () => {
                 </DropdownMenu>
               </>
             ) : (
-              <Link to="/auth">
-                <Button className="bg-green-600 hover:bg-green-700">
-                  Masuk / Daftar
+              <>
+                {/* Cart Button for non-logged in users - redirects to auth */}
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="relative"
+                  onClick={() => navigate("/auth")}
+                >
+                  <ShoppingCart className="h-5 w-5" />
                 </Button>
-              </Link>
+                
+                <Link to="/auth">
+                  <Button className="bg-green-600 hover:bg-green-700">
+                    Masuk / Daftar
+                  </Button>
+                </Link>
+              </>
             )}
             
             {/* Mobile Menu Button */}
@@ -117,7 +139,12 @@ const Navigation = () => {
             <button type="button" className="block py-2 text-gray-700 hover:text-green-600 w-full text-left">Kategori</button>
             <button type="button" className="block py-2 text-gray-700 hover:text-green-600 w-full text-left">Promo</button>
             {user && (
-              <Link to="/dashboard" className="block py-2 text-gray-700 hover:text-green-600">AI Assistant</Link>
+              <>
+                <Link to="/dashboard" className="block py-2 text-gray-700 hover:text-green-600">AI Assistant</Link>
+                <Link to="/cart" className="block py-2 text-gray-700 hover:text-green-600">
+                  Keranjang {totalItems > 0 && `(${totalItems})`}
+                </Link>
+              </>
             )}
             <button type="button" className="block py-2 text-gray-700 hover:text-green-600 w-full text-left">Bantuan</button>
             {user && (

@@ -2,7 +2,6 @@
 import { useState } from "react";
 import Navigation from "@/components/Navigation";
 import ChatBot from "@/components/ChatBot";
-import CartSection from "@/components/CartSection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Camera, MessageCircle, Calendar, TrendingUp } from "lucide-react";
@@ -79,8 +78,28 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
 
-              {/* Cart Section */}
-              <CartSection />
+              {/* Quick Access Card */}
+              <Card className="hover:shadow-lg transition-all duration-300 border-purple-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Calendar className="h-5 w-5 text-purple-600" />
+                    Akses Cepat
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <a href="/cart" className="block text-sm text-gray-600 hover:text-green-600 transition-colors">
+                      🛒 Keranjang Belanja
+                    </a>
+                    <a href="/" className="block text-sm text-gray-600 hover:text-green-600 transition-colors">
+                      🏠 Kembali ke Beranda
+                    </a>
+                    <button className="block text-sm text-gray-600 hover:text-green-600 transition-colors text-left">
+                      📞 Hubungi Support
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Chat Interface */}
