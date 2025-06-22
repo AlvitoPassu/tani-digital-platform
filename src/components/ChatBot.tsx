@@ -1,15 +1,13 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Camera, MessageCircle, TrendingUp, Sparkles } from "lucide-react";
 import VisionAI from "./VisionAI";
-import AgriAssistant from "./AgriAssistant";
 import GeminiAssistant from "./GeminiAssistant";
 import CropPlanner from "./CropPlanner";
 
 const ChatBot = () => {
-  const [activeTab, setActiveTab] = useState("assistant");
+  const [activeTab, setActiveTab] = useState("gemini");
 
   return (
     <Card className="h-[600px] shadow-xl border-gray-200">
@@ -22,14 +20,10 @@ const ChatBot = () => {
       
       <CardContent className="p-0 h-full">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <TabsList className="grid w-full grid-cols-4 rounded-none border-b">
+          <TabsList className="grid w-full grid-cols-3 rounded-none border-b">
             <TabsTrigger value="vision" className="flex items-center gap-2">
               <Camera className="h-4 w-4" />
               Vision AI
-            </TabsTrigger>
-            <TabsTrigger value="assistant" className="flex items-center gap-2">
-              <MessageCircle className="h-4 w-4" />
-              OpenAI Chat
             </TabsTrigger>
             <TabsTrigger value="gemini" className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
@@ -44,10 +38,6 @@ const ChatBot = () => {
           <div className="flex-1 overflow-hidden">
             <TabsContent value="vision" className="h-full m-0">
               <VisionAI />
-            </TabsContent>
-            
-            <TabsContent value="assistant" className="h-full m-0">
-              <AgriAssistant />
             </TabsContent>
             
             <TabsContent value="gemini" className="h-full m-0">

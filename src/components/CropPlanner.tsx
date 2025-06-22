@@ -1,13 +1,43 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, Cloud, MapPin, Calendar, DollarSign, Loader } from "lucide-react";
+import { TrendingUp, Cloud, MapPin, Loader, Sprout, Info, CloudRain, Thermometer, Wind, Layers } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+
+interface CropRecommendation {
+  name: string;
+  suitability: string;
+  reason: string;
+}
+
+interface SoilAnalysis {
+  type: string;
+  ph: number;
+  suitability: number;
+  nutrients: {
+    nitrogen: string;
+    phosphorus: string;
+    potassium: string;
+  };
+  recommendations: string[];
+}
+
+interface AnalysisRecommendation {
+  topCrops: CropRecommendation[];
+  weatherForecast: {
+    rainfall: string;
+    temperature: string;
+    humidity: string;
+    recommendation: string;
+  };
+  soilAnalysis: SoilAnalysis;
+}
 
 const CropPlanner = () => {
   const [formData, setFormData] = useState({
@@ -17,7 +47,7 @@ const CropPlanner = () => {
     season: ''
   });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [recommendations, setRecommendations] = useState<any>(null);
+  const [recommendations, setRecommendations] = useState<AnalysisRecommendation | null>(null);
   const { toast } = useToast();
 
   const handleInputChange = (field: string, value: string) => {
@@ -49,13 +79,13 @@ const CropPlanner = () => {
 
       toast({
         title: "Analisis Selesai",
-        description: "Rekomendasi penanaman dari OpenAI telah dibuat berdasarkan data Anda",
+        description: "Rekomendasi penanaman berdasarkan data cuaca telah dibuat.",
       });
     } catch (error) {
       console.error('Error generating recommendations:', error);
       toast({
         title: "Error",
-        description: "Gagal membuat rekomendasi. Pastikan API key OpenAI sudah dikonfigurasi.",
+        description: "Gagal membuat rekomendasi. Periksa kembali lokasi yang Anda masukkan.",
         variant: "destructive"
       });
     } finally {
@@ -66,8 +96,8 @@ const CropPlanner = () => {
   return (
     <div className="h-full flex flex-col">
       <div className="p-6 border-b">
-        <h3 className="text-lg font-semibold mb-2">AI Crop Planner (OpenAI)</h3>
-        <p className="text-sm text-gray-600">Rekomendasi penanaman berdasarkan AI analysis dari OpenAI</p>
+        <h3 className="text-lg font-semibold mb-2">AI Crop Planner (Weather-Based)</h3>
+        <p className="text-sm text-gray-600">Rekomendasi penanaman berdasarkan analisis cuaca dari OpenWeatherMap</p>
       </div>
 
       <div className="flex-1 p-6 overflow-y-auto space-y-6">
@@ -148,7 +178,7 @@ const CropPlanner = () => {
               ) : (
                 <>
                   <TrendingUp className="h-4 w-4 mr-2" />
-                  Buat Rekomendasi dengan OpenAI
+                  Buat Rekomendasi
                 </>
               )}
             </Button>
@@ -157,115 +187,96 @@ const CropPlanner = () => {
 
         {/* Recommendations */}
         {recommendations && (
-          <div className="space-y-4">
-            {/* Top Crop Recommendations */}
-            <Card>
+           <div className="space-y-6 pt-4">
+            {/* 1. Main Recommendation Card */}
+            <Card className="border-green-200 bg-green-50/50">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-green-600" />
-                  Rekomendasi Komoditas Terbaik (Powered by OpenAI)
+                <CardTitle className="flex items-center gap-3 text-green-800">
+                  <Sprout className="h-6 w-6" />
+                  Rekomendasi Tanaman Unggulan
                 </CardTitle>
+                <p className="text-sm text-green-700 pt-1">Tanaman yang paling cocok berdasarkan analisis kondisi Anda.</p>
               </CardHeader>
               <CardContent className="space-y-4">
-                {recommendations.topCrops?.map((crop: any, index: number) => (
-                  <div key={index} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-semibold text-lg">{crop.name}</h4>
-                      <div className="text-right">
-                        <div className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-medium">
-                          Profit Score: {crop.profit}/100
-                        </div>
-                      </div>
+                {recommendations.topCrops?.map((crop, index) => (
+                  <div key={index} className="border bg-white rounded-lg p-4 shadow-sm">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-semibold text-lg text-gray-800">{crop.name}</h4>
+                      <Badge variant={crop.suitability.includes('Sangat') ? 'default' : 'secondary'} className="bg-green-600 text-white hover:bg-green-700">{crop.suitability}</Badge>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium">Musim Optimal:</span> {crop.season}
-                      </div>
-                      <div>
-                        <span className="font-medium">Durasi:</span> {crop.duration}
-                      </div>
-                      <div>
-                        <span className="font-medium">Modal:</span> {crop.investment}
-                      </div>
-                      <div>
-                        <span className="font-medium">Proyeksi Hasil:</span> {crop.expectedReturn}
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Tren Pasar:</span>
-                        <span className="text-green-600 font-medium">{crop.marketTrend}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Kesesuaian Cuaca:</span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-20 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-green-500 h-2 rounded-full" 
-                              style={{width: `${crop.weatherSuitability}%`}}
-                            ></div>
-                          </div>
-                          <span className="text-green-600 font-medium">{crop.weatherSuitability}%</span>
-                        </div>
-                      </div>
-                    </div>
+                    <p className="text-sm text-gray-600 flex items-start gap-2">
+                      <Info className="h-4 w-4 mt-0.5 text-gray-500 flex-shrink-0" />
+                      <span>{crop.reason}</span>
+                    </p>
                   </div>
                 ))}
               </CardContent>
             </Card>
 
-            {/* Weather Forecast */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Cloud className="h-5 w-5 text-blue-600" />
-                  Prediksi Cuaca & Iklim
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div><span className="font-medium">Curah Hujan:</span> {recommendations.weatherForecast?.rainfall}</div>
-                  <div><span className="font-medium">Suhu:</span> {recommendations.weatherForecast?.temperature}</div>
-                  <div><span className="font-medium">Kelembaban:</span> {recommendations.weatherForecast?.humidity}</div>
-                </div>
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <p className="text-sm text-blue-800">{recommendations.weatherForecast?.recommendation}</p>
-                </div>
-              </CardContent>
-            </Card>
+            {/* 2. Detailed Analysis Cards (Weather and Soil) in a grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Weather Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3 text-blue-800">
+                    <Cloud className="h-6 w-6" />
+                    Analisis Cuaca
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-gray-600"><CloudRain className="h-4 w-4"/>Curah Hujan (5 hari)</span>
+                    <span className="font-bold text-gray-800">{recommendations.weatherForecast.rainfall}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-gray-600"><Thermometer className="h-4 w-4"/>Suhu Rata-rata</span>
+                    <span className="font-bold text-gray-800">{recommendations.weatherForecast.temperature}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-gray-600"><Wind className="h-4 w-4"/>Kelembaban</span>
+                    <span className="font-bold text-gray-800">{recommendations.weatherForecast.humidity}</span>
+                  </div>
+                  <Separator className="my-3"/>
+                  <p className="text-xs text-center text-gray-500 pt-1">{recommendations.weatherForecast.recommendation}</p>
+                </CardContent>
+              </Card>
 
-            {/* Soil Analysis */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-yellow-600" />
-                  Analisis Tanah & Rekomendasi
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div><span className="font-medium">Jenis Tanah:</span> {recommendations.soilAnalysis?.type}</div>
-                  <div><span className="font-medium">Kesesuaian:</span> {recommendations.soilAnalysis?.suitability}</div>
-                  <div><span className="font-medium">Nutrisi:</span> {recommendations.soilAnalysis?.nutrients}</div>
-                  <div><span className="font-medium">pH:</span> {recommendations.soilAnalysis?.ph}</div>
-                </div>
-                {recommendations.soilAnalysis?.recommendations && (
-                  <div>
-                    <h4 className="font-medium mb-2">Rekomendasi Perbaikan Tanah:</h4>
-                    <ul className="space-y-1">
-                      {recommendations.soilAnalysis.recommendations.map((rec: string, index: number) => (
-                        <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
-                          <span className="text-green-600 mt-1">•</span>
-                          {rec}
-                        </li>
-                      ))}
+              {/* Soil Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3 text-orange-800">
+                    <Layers className="h-6 w-6" />
+                    Analisis Tanah
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                   <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Jenis Tanah</span>
+                    <span className="font-bold text-gray-800">{recommendations.soilAnalysis.type}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">pH Tanah</span>
+                    <span className="font-bold text-gray-800">{recommendations.soilAnalysis.ph}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600">Kesesuaian</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 bg-gray-200 rounded-full h-2.5">
+                        <div className="bg-orange-500 h-2.5 rounded-full" style={{width: `${recommendations.soilAnalysis.suitability}%`}}></div>
+                      </div>
+                      <span className="font-bold text-gray-800">{recommendations.soilAnalysis.suitability}%</span>
+                    </div>
+                  </div>
+                  <Separator className="my-3"/>
+                   <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Rekomendasi Perawatan Tanah:</h4>
+                    <ul className="list-disc list-inside text-gray-600 space-y-1">
+                      {recommendations.soilAnalysis.recommendations.map((rec, i) => <li key={i}>{rec}</li>)}
                     </ul>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )}
       </div>

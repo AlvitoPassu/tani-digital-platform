@@ -1,13 +1,23 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+const geminiApiKey = Deno.env.get('JMDqwQIv5fk6T0BxXZEKDbcWMXieyZpzXdbb5k7oZWZ6XPBBfx');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Define interfaces for better type safety
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+interface RequestBody {
+  message: string;
+  conversationHistory: ChatMessage[];
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -15,10 +25,20 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversationHistory = [] } = await req.json();
+    const { message, conversationHistory = [] }: RequestBody = await req.json();
 
-    if (!message) {
-      throw new Error('No message provided');
+    if (!message || typeof message !== 'string') {
+      return new Response(JSON.stringify({ error: 'Message is required and must be a string.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!Array.isArray(conversationHistory)) {
+      return new Response(JSON.stringify({ error: 'conversationHistory must be an array.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     if (!geminiApiKey) {
@@ -51,11 +71,12 @@ Gunakan bahasa Indonesia yang mudah dipahami dan berikan contoh konkret.
 `;
 
     // Add conversation history
-    conversationHistory.forEach((msg: any) => {
+    conversationHistory.forEach((msg: ChatMessage) => {
+      const sanitizedContent = msg.content.replace(/(\r\n|\n|\r)/gm, " ");
       if (msg.role === 'user') {
-        conversationText += `Pengguna: ${msg.content}\n`;
+        conversationText += `Pengguna: ${sanitizedContent}\n`;
       } else {
-        conversationText += `Assistant: ${msg.content}\n`;
+        conversationText += `Assistant: ${sanitizedContent}\n`;
       }
     });
 
@@ -121,11 +142,12 @@ Gunakan bahasa Indonesia yang mudah dipahami dan berikan contoh konkret.
 
     const data = await response.json();
     
-    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+    const botResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!botResponse) {
+      console.error('Invalid response structure from Gemini API:', data);
       throw new Error('Invalid response format from Gemini API');
     }
-    
-    const botResponse = data.candidates[0].content.parts[0].text;
 
     console.log('Successfully generated response from Gemini, length:', botResponse.length);
 

@@ -1,15 +1,37 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Camera, AlertCircle, CheckCircle, Loader } from "lucide-react";
+import { Upload, AlertCircle, CheckCircle, Loader, Leaf } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+
+interface DiseaseDetail {
+  common_names?: string[];
+  description: string;
+  treatment?: {
+    prevention?: string[];
+    chemical?: string[];
+    biological?: string[];
+  };
+}
+
+interface Disease {
+  name: string;
+  probability: number;
+  disease_details: DiseaseDetail;
+}
+
+interface PlantIdResponse {
+  health_assessment?: {
+    is_healthy: boolean;
+    diseases: Disease[];
+  };
+}
 
 const VisionAI = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [plantIdResult, setPlantIdResult] = useState<PlantIdResponse | null>(null);
   const { toast } = useToast();
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,7 +40,7 @@ const VisionAI = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         setSelectedImage(e.target?.result as string);
-        setAnalysisResult(null);
+        setPlantIdResult(null);
       };
       reader.readAsDataURL(file);
     }
@@ -26,29 +48,51 @@ const VisionAI = () => {
 
   const analyzeImage = async () => {
     if (!selectedImage) return;
-    
+
     setIsAnalyzing(true);
-    
+    setPlantIdResult(null);
+
     try {
-      const { data, error } = await supabase.functions.invoke('vision-ai', {
-        body: { image: selectedImage }
+      // The Plant.id API expects a pure base64 string, not a data URL.
+      // We need to strip the metadata from the beginning of the string.
+      const base64Image = selectedImage.split(',')[1];
+
+      const { data, error } = await supabase.functions.invoke('plant-id-assistant', {
+        body: { image: base64Image }
       });
 
       if (error) {
-        throw new Error(error.message);
+        console.error('Error analyzing image with Plant.id:', { error, data });
+        
+        // Check for rate-limiting error (429)
+        if (data?.error && /429/.test(data.error)) {
+           toast({
+            title: "Batas Penggunaan API Tercapai",
+            description: "Anda telah mencapai batas penggunaan gratis Plant.id. Coba lagi besok.",
+            variant: "destructive",
+          });
+        } else {
+          // Display other errors returned from the function
+          toast({
+            title: "Error",
+            description: data?.error || error.message || "Gagal menganalisis gambar.",
+            variant: "destructive"
+          });
+        }
+        return;
       }
 
-      setAnalysisResult(data);
+      setPlantIdResult(data as PlantIdResponse);
       
       toast({
         title: "Analisis Selesai",
-        description: "Hasil diagnosa penyakit tanaman telah tersedia",
+        description: "Hasil diagnosa dari Plant.id telah tersedia",
       });
     } catch (error) {
-      console.error('Error analyzing image:', error);
+      console.error('Error analyzing image with Plant.id:', error);
       toast({
         title: "Error",
-        description: "Gagal menganalisis gambar. Pastikan API key OpenAI sudah dikonfigurasi.",
+        description: "Terjadi kesalahan tak terduga saat mencoba menganalisis gambar.",
         variant: "destructive"
       });
     } finally {
@@ -59,8 +103,8 @@ const VisionAI = () => {
   return (
     <div className="h-full flex flex-col">
       <div className="p-6 border-b">
-        <h3 className="text-lg font-semibold mb-2">Diagnosa Penyakit Tanaman</h3>
-        <p className="text-sm text-gray-600">Upload foto daun, batang, atau buah untuk analisis AI</p>
+        <h3 className="text-lg font-semibold mb-2">Diagnosa Penyakit Tanaman dengan AI</h3>
+        <p className="text-sm text-gray-600">Upload foto tanaman untuk dianalisis oleh Plant.id API</p>
       </div>
 
       <div className="flex-1 p-6 overflow-y-auto space-y-4">
@@ -82,12 +126,12 @@ const VisionAI = () => {
                   {isAnalyzing ? (
                     <>
                       <Loader className="h-4 w-4 mr-2 animate-spin" />
-                      Menganalisis dengan AI...
+                      <span>AI sedang menganalisis...</span>
                     </>
                   ) : (
                     <>
-                      <Camera className="h-4 w-4 mr-2" />
-                      Analisis dengan OpenAI
+                      <Leaf className="h-4 w-4 mr-2" />
+                      Analisis dengan Plant.id
                     </>
                   )}
                 </Button>
@@ -117,77 +161,66 @@ const VisionAI = () => {
         </Card>
 
         {/* Analysis Results */}
-        {analysisResult && (
-          <div className="space-y-4">
-            <Card className={`border-2 ${analysisResult.disease === 'Sehat' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
-              <CardHeader className="pb-3">
-                <CardTitle className={`flex items-center gap-2 ${analysisResult.disease === 'Sehat' ? 'text-green-700' : 'text-red-700'}`}>
-                  {analysisResult.disease === 'Sehat' ? (
-                    <CheckCircle className="h-5 w-5" />
-                  ) : (
-                    <AlertCircle className="h-5 w-5" />
-                  )}
-                  Hasil Diagnosa AI
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold">{analysisResult.disease}</span>
-                  <span className={`px-2 py-1 rounded text-sm ${
-                    analysisResult.disease === 'Sehat' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {analysisResult.confidence}% yakin
-                  </span>
-                </div>
-                <p className="text-sm text-gray-700">{analysisResult.description}</p>
-                {analysisResult.severity && analysisResult.disease !== 'Sehat' && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Tingkat Keparahan:</span>
-                    <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">
-                      {analysisResult.severity}
-                    </span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {analysisResult.treatment && analysisResult.treatment.length > 0 && (
+        {plantIdResult && (
+           <div className="space-y-4 mt-4">
+            {plantIdResult.health_assessment?.is_healthy ? (
               <Card className="border-green-200 bg-green-50">
-                <CardHeader className="pb-3">
+                <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-green-700">
                     <CheckCircle className="h-5 w-5" />
-                    Rekomendasi Penanganan
+                    Tanaman Terlihat Sehat (Plant.id)
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <h4 className="font-medium mb-2">Pengobatan:</h4>
-                    <ul className="space-y-1">
-                      {analysisResult.treatment.map((item: string, index: number) => (
-                        <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
-                          <span className="text-green-600 mt-1">•</span>
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  {analysisResult.prevention && analysisResult.prevention.length > 0 && (
-                    <div>
-                      <h4 className="font-medium mb-2">Pencegahan:</h4>
-                      <ul className="space-y-1">
-                        {analysisResult.prevention.map((item: string, index: number) => (
-                          <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
-                            <span className="text-green-600 mt-1">•</span>
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                <CardContent>
+                  <p>Menurut analisis Plant.id, tanaman ini dalam kondisi baik.</p>
                 </CardContent>
               </Card>
+            ) : (
+              plantIdResult.health_assessment?.diseases.map((disease) => (
+                <Card key={disease.name} className="border-orange-200 bg-orange-50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-orange-700">
+                      <Leaf className="h-5 w-5" />
+                      Hasil Diagnosa (Plant.id)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">{disease.disease_details.common_names?.join(', ') || disease.name}</span>
+                      <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-sm">
+                        {(disease.probability * 100).toFixed(0)}% yakin
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700">{disease.disease_details.description}</p>
+                    
+                    {disease.disease_details.treatment?.prevention && (
+                      <div>
+                        <h4 className="font-medium text-sm">Pencegahan:</h4>
+                        <ul className="list-disc list-inside text-sm text-gray-600">
+                          {disease.disease_details.treatment.prevention.map((t: string) => <li key={t}>{t}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {disease.disease_details.treatment?.chemical && (
+                      <div>
+                        <h4 className="font-medium text-sm">Penanganan Kimia:</h4>
+                        <ul className="list-disc list-inside text-sm text-gray-600">
+                          {disease.disease_details.treatment.chemical.map((t: string) => <li key={t}>{t}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                      {disease.disease_details.treatment?.biological && (
+                      <div>
+                        <h4 className="font-medium text-sm">Penanganan Biologis:</h4>
+                        <ul className="list-disc list-inside text-sm text-gray-600">
+                          {disease.disease_details.treatment.biological.map((t: string) => <li key={t}>{t}</li>)}
+                        </ul>
+                      </div>
+                    )}
+
+                  </CardContent>
+                </Card>
+              ))
             )}
           </div>
         )}
