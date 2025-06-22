@@ -1,5 +1,4 @@
-
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -42,9 +41,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  
+  // Add refs to prevent infinite loops
+  const fetchingProfile = useRef(false);
+  const lastFetchedUserId = useRef<string | null>(null);
 
   const fetchProfile = async (userId: string) => {
+    // Prevent multiple simultaneous fetches for the same user
+    if (fetchingProfile.current || lastFetchedUserId.current === userId) {
+      return;
+    }
+
     try {
+      fetchingProfile.current = true;
+      lastFetchedUserId.current = userId;
+      
       console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
@@ -66,9 +77,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile(profileData);
       } else {
         console.log('No profile found for user:', userId);
+        // Try to create profile from user metadata
+        await createProfileFromUser(userId);
       }
     } catch (error) {
       console.error('Error in fetchProfile:', error);
+    } finally {
+      fetchingProfile.current = false;
+    }
+  };
+
+  const createProfileFromUser = async (userId: string) => {
+    try {
+      console.log('Attempting to create default profile for user:', userId);
+      
+      // Create a default profile with buyer role
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          name: 'User',
+          role: 'buyer'
+        })
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        // If profile creation fails, set a default profile in state
+        const defaultProfile: Profile = {
+          id: userId,
+          name: 'User',
+          role: 'buyer',
+          phone_number: null,
+          address: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        setProfile(defaultProfile);
+        return;
+      }
+
+      if (profileData) {
+        const newProfile: Profile = {
+          ...profileData,
+          role: profileData.role as UserRole
+        };
+        console.log('Profile created successfully:', newProfile);
+        setProfile(newProfile);
+      }
+    } catch (error) {
+      console.error('Error in createProfileFromUser:', error);
+      // Set default profile even if creation fails
+      const defaultProfile: Profile = {
+        id: userId,
+        name: 'User',
+        role: 'buyer',
+        phone_number: null,
+        address: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      setProfile(defaultProfile);
     }
   };
 
@@ -88,9 +158,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          fetchProfile(session.user.id);
+          // Only fetch profile if user changed or profile is null
+          if (lastFetchedUserId.current !== session.user.id || !profile) {
+            await fetchProfile(session.user.id);
+          }
         } else {
           setProfile(null);
+          lastFetchedUserId.current = null;
         }
         
         setLoading(false);
@@ -239,6 +313,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile(null);
         setUser(null);
         setSession(null);
+        lastFetchedUserId.current = null;
         toast({
           title: "Logout Berhasil",
           description: "Anda telah keluar dari akun",

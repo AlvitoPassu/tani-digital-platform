@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +26,22 @@ const App = () => (
               path="/dashboard" 
               element={
                 <ProtectedRoute requireAuth={true}>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/farmer-tools" 
+              element={
+                <ProtectedRoute requireAuth={true} requiredRole="farmer">
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin-panel" 
+              element={
+                <ProtectedRoute requireAuth={true} requiredRole="admin">
                   <Dashboard />
                 </ProtectedRoute>
               } 
