@@ -1,32 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const openWeatherApiKey = Deno.env.get('OPENWEATHER_API_KEY');
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const supabaseUrl = 'https://kkxhaedaekxosbyzmjit.supabase.co';
+const KINDWISE_API_KEY = '3V7h4q3u32IEUpCVOxNrcFkfIwW4yMZze6qHpmCG0rzk6rDMUn';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-// Simplified logic for crop recommendations
-const getCropRecommendations = (avgTemp: number, totalRainfall: number, season: string) => {
-  const recommendations = [];
-  if (avgTemp > 25 && totalRainfall > 50 && (season === 'musim-hujan' || season === 'peralihan')) {
-    recommendations.push({ name: 'Padi', suitability: 'Sangat Cocok', reason: 'Suhu hangat dan curah hujan tinggi.' });
-  }
-  if (avgTemp > 20 && totalRainfall < 50 && (season === 'musim-kemarau' || season === 'peralihan')) {
-    recommendations.push({ name: 'Jagung', suitability: 'Cocok', reason: 'Tahan di suhu hangat dengan sedikit hujan.' });
-  }
-  if (avgTemp > 22 && totalRainfall > 30) {
-    recommendations.push({ name: 'Kedelai', suitability: 'Cukup Cocok', reason: 'Membutuhkan kehangatan dan kelembapan sedang.' });
-  }
-  if (season === 'musim-kemarau' && totalRainfall < 40) {
-     recommendations.push({ name: 'Bawang Merah', suitability: 'Cocok', reason: 'Membutuhkan sinar matahari penuh dan tidak tergenang air.' });
-  }
-   if (avgTemp < 25 && season !== 'musim-kemarau') {
-    recommendations.push({ name: 'Cabai', suitability: 'Cukup Cocok', reason: 'Suhu tidak terlalu panas dan cukup air.' });
-  }
-
-  return recommendations.length > 0 ? recommendations : [{ name: 'Belum ada rekomendasi', suitability: 'Kurang Cocok', reason: 'Kondisi cuaca saat ini kurang ideal untuk tanaman umum.' }];
 };
 
 const getSoilAnalysis = (soilType: string) => {
@@ -40,6 +21,24 @@ const getSoilAnalysis = (soilType: string) => {
     }
 };
 
+async function getCropRecommendationsFromDB(avgTemp, totalRainfall, season, soilType) {
+  const response = await fetch(`${supabaseUrl}/rest/v1/crops`, {
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+    },
+  });
+  const crops = await response.json();
+
+  // Filter crops sesuai kondisi cuaca, musim, dan tanah
+  return crops.filter(crop => {
+    const seasonMatch = crop.suitable_season?.split(',').map(s => s.trim()).includes(season);
+    const soilMatch = crop.soil_type?.split(',').map(s => s.trim()).includes(soilType);
+    const tempMatch = (!crop.min_temp || avgTemp >= crop.min_temp) && (!crop.max_temp || avgTemp <= crop.max_temp);
+    const rainMatch = (!crop.min_rainfall || totalRainfall >= crop.min_rainfall) && (!crop.max_rainfall || totalRainfall <= crop.max_rainfall);
+    return seasonMatch && soilMatch && tempMatch && rainMatch;
+  });
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -64,7 +63,7 @@ serve(async (req) => {
       console.error('OpenWeather API Error:', errorMessage, 'Status:', weatherResponse.status);
       
       if (weatherResponse.status === 404) {
-          throw new Error(`Lokasi "${location}" tidak dapat ditemukan. Mohon coba dengan nama kota atau daerah yang lebih umum.`);
+          throw new Error(`Lokasi \"${location}\" tidak dapat ditemukan. Mohon coba dengan nama kota atau daerah yang lebih umum.`);
       }
       if (weatherResponse.status === 401) {
           throw new Error('API Key OpenWeather tidak valid atau belum aktif. Silakan periksa kembali atau tunggu beberapa saat.');
@@ -77,14 +76,14 @@ serve(async (req) => {
     // Process weather data
     let totalRainfall = 0;
     let totalTemp = 0;
-    weatherData.list.forEach((item: any) => {
+    weatherData.list.forEach((item) => {
       if (item.rain && item.rain['3h']) {
         totalRainfall += item.rain['3h'];
       }
       totalTemp += item.main.temp;
     });
     const avgTemp = totalTemp / weatherData.list.length;
-    const avgHumidity = weatherData.list.reduce((acc: number, item: any) => acc + item.main.humidity, 0) / weatherData.list.length;
+    const avgHumidity = weatherData.list.reduce((acc, item) => acc + item.main.humidity, 0) / weatherData.list.length;
 
     const weatherForecast = {
       rainfall: `${totalRainfall.toFixed(2)} mm (5 hari)`,
@@ -93,15 +92,35 @@ serve(async (req) => {
       recommendation: avgTemp > 25 ? "Kondisi hangat, cocok untuk tanaman tropis." : "Suhu sedang, perhatikan kebutuhan air.",
     };
     
-    const cropRecommendations = getCropRecommendations(avgTemp, totalRainfall, season);
+    // Ambil rekomendasi tanaman dari database
+    const cropRecommendations = await getCropRecommendationsFromDB(avgTemp, totalRainfall, season, soilType);
     const soilAnalysis = getSoilAnalysis(soilType);
 
     const responsePayload = {
       topCrops: cropRecommendations,
       weatherForecast,
-      soilAnalysis
+      soilAnalysis,
+      kindwise: kindwiseData
     };
     
+    const kindwiseResponse = await fetch('https://api.kindwise.com/v1/crop-health', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${KINDWISE_API_KEY}`,
+      },
+      body: JSON.stringify({
+        image_url: "https://example.com/image.jpg"
+      }),
+    });
+
+    if (!kindwiseResponse.ok) {
+      const errorText = await kindwiseResponse.text();
+      throw new Error(`Kindwise API error: ${kindwiseResponse.status} - ${errorText}`);
+    }
+
+    const kindwiseData = await kindwiseResponse.json();
+
     return new Response(JSON.stringify(responsePayload), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
