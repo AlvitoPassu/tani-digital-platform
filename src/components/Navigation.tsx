@@ -11,12 +11,35 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useNotifications } from "./NotificationProvider";
+
+// Helper function to format time
+const timeAgo = (date: Date) => {
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+  let interval = seconds / 31536000;
+  if (interval > 1) return Math.floor(interval) + " tahun lalu";
+  interval = seconds / 2592000;
+  if (interval > 1) return Math.floor(interval) + " bulan lalu";
+  interval = seconds / 86400;
+  if (interval > 1) return Math.floor(interval) + " hari lalu";
+  interval = seconds / 3600;
+  if (interval > 1) return Math.floor(interval) + " jam lalu";
+  interval = seconds / 60;
+  if (interval > 1) return Math.floor(interval) + " menit lalu";
+  return Math.floor(seconds) + " detik lalu";
+};
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, profile, signOut } = useAuth();
   const { totalItems } = useCart();
   const navigate = useNavigate();
+  const { notifications, unreadCount } = useNotifications();
 
   const handleSignOut = async () => {
     try {
@@ -77,9 +100,49 @@ const Navigation = () => {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
-                <Button variant="ghost" size="icon" className="hidden md:flex">
-                  <Bell className="h-5 w-5" />
-                </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative hidden md:flex">
+                      <Bell className="h-5 w-5" />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-80 p-0">
+                    <div className="p-4 border-b">
+                      <h4 className="text-base font-medium">Notifikasi</h4>
+                    </div>
+                    <div className="mt-2 space-y-2 max-h-80 overflow-y-auto p-2">
+                      {notifications.length > 0 ? (
+                        notifications.map((notif) => (
+                          <div key={notif.id} className="p-2 hover:bg-gray-100 rounded-md">
+                            <div className="flex items-start space-x-3">
+                              <div className="flex-shrink-0 h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <Bell className="h-4 w-4 text-green-600" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">{notif.title}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {notif.body}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {timeAgo(notif.createdAt)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-sm text-gray-500 py-10">
+                          Tidak ada notifikasi baru.
+                        </div>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 
                 {/* Cart Button - Available for all users */}
                 <Link to="/cart">
