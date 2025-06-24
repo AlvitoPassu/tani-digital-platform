@@ -1,8 +1,12 @@
-
 import { Sprout, Zap, Wrench, Apple, Wheat, TreePine } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
-const CategorySection = () => {
+interface CategorySectionProps {
+  selectedCategory: string | null;
+  setSelectedCategory: (cat: string | null) => void;
+}
+
+const CategorySection = ({ selectedCategory, setSelectedCategory }: CategorySectionProps) => {
   const categories = [
     {
       icon: Sprout,
@@ -63,10 +67,12 @@ const CategorySection = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {categories.map((category, index) => {
             const IconComponent = category.icon;
+            const isSelected = selectedCategory === category.name;
             return (
               <Card
                 key={index}
-                className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white hover:-translate-y-1"
+                className={`group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 bg-white hover:-translate-y-1 ${isSelected ? 'ring-2 ring-green-500' : ''}`}
+                onClick={() => setSelectedCategory(isSelected ? null : category.name)}
               >
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">
@@ -74,9 +80,7 @@ const CategorySection = () => {
                       <IconComponent className="h-6 w-6" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-1 group-hover:text-green-600 transition-colors">
-                        {category.name}
-                      </h3>
+                      <h3 className={`text-lg font-semibold mb-1 group-hover:text-green-600 transition-colors ${isSelected ? 'text-green-600' : 'text-gray-800'}`}>{category.name}</h3>
                       <p className="text-sm text-gray-600 mb-2">{category.description}</p>
                       <div className="text-sm font-medium text-green-600">{category.count}</div>
                     </div>

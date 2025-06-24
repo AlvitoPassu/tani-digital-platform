@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Search, ShoppingCart, User, Bell, Menu, Leaf, Truck, Shield, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,19 +9,115 @@ import HeroSection from "@/components/HeroSection";
 import CategorySection from "@/components/CategorySection";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import StatsSection from "@/components/StatsSection";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000000]);
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const locations = [
+    "Semua", "Jakarta Barat", "Bandung", "Surabaya", "Yogyakarta", "Malang", "Semarang"
+  ];
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const productsRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  const resetFilter = () => {
+    setSearchQuery("");
+    setSelectedCategory(null);
+    setPriceRange([0, 2000000]);
+    setSelectedLocation(null);
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 100);
+  };
+
+  const scrollToProducts = () => {
+    setTimeout(() => {
+      productsRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  };
+
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      productsRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100">
       <Navigation />
       
       <main className="pt-16">
-        <HeroSection searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+        <HeroSection
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          searchInputRef={searchInputRef}
+          onSubmit={handleSearchSubmit}
+        />
         <StatsSection />
-        <CategorySection />
-        <FeaturedProducts />
+        <CategorySection selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
+
+        {/* Filter Bar */}
+        <div className="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row gap-4 items-center px-4">
+          {/* Filter Harga */}
+          <div className="flex items-center gap-2">
+            <span className="font-medium">Harga:</span>
+            <input
+              type="number"
+              min={0}
+              max={priceRange[1]}
+              value={priceRange[0]}
+              onChange={e => setPriceRange([Number(e.target.value), priceRange[1]])}
+              className="w-20 px-2 py-1 border rounded"
+              placeholder="Min"
+            />
+            <span>-</span>
+            <input
+              type="number"
+              min={priceRange[0]}
+              max={2000000}
+              value={priceRange[1]}
+              onChange={e => setPriceRange([priceRange[0], Number(e.target.value)])}
+              className="w-20 px-2 py-1 border rounded"
+              placeholder="Max"
+            />
+          </div>
+          {/* Filter Lokasi */}
+          <div className="flex items-center gap-2">
+            <span className="font-medium">Lokasi:</span>
+            <select
+              value={selectedLocation || "Semua"}
+              onChange={e => setSelectedLocation(e.target.value === "Semua" ? null : e.target.value)}
+              className="px-2 py-1 border rounded"
+            >
+              {locations.map(loc => (
+                <option key={loc} value={loc}>{loc}</option>
+              ))}
+            </select>
+          </div>
+          {/* Reset Filter Button */}
+          <button
+            className="ml-auto bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded font-semibold"
+            onClick={resetFilter}
+            type="button"
+          >
+            Reset Filter
+          </button>
+        </div>
+
+        {/* Produk Section dengan ref */}
+        <div ref={productsRef}>
+          <FeaturedProducts
+            searchQuery={searchQuery}
+            selectedCategory={selectedCategory}
+            priceRange={priceRange}
+            selectedLocation={selectedLocation}
+          />
+        </div>
         
         {/* Features Section */}
         <section className="py-16 px-4 bg-white">
