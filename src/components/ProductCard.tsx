@@ -1,4 +1,3 @@
-
 import { Star, MapPin, ShoppingCart, Heart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface Product {
   id: number;
-  name: string;
+  name: React.ReactNode;
   price: number;
   originalPrice?: number;
   image: string;
@@ -64,7 +63,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       <div className="relative">
         <img
           src={product.image}
-          alt={product.name}
+          alt={product.name.toString()}
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         />
         

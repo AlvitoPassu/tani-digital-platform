@@ -1,4 +1,3 @@
-
 import { Search, MapPin, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,9 +5,15 @@ import { Input } from "@/components/ui/input";
 interface HeroSectionProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  searchInputRef?: React.RefObject<HTMLInputElement>;
+  onSubmit?: () => void;
 }
 
-const HeroSection = ({ searchQuery, setSearchQuery }: HeroSectionProps) => {
+const HeroSection = ({ searchQuery, setSearchQuery, searchInputRef, onSubmit }: HeroSectionProps) => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onSubmit) onSubmit();
+  };
   return (
     <section className="relative py-20 px-4 bg-gradient-to-r from-green-600 to-emerald-700 text-white overflow-hidden">
       {/* Background Pattern */}
@@ -36,7 +41,7 @@ const HeroSection = ({ searchQuery, setSearchQuery }: HeroSectionProps) => {
 
         {/* Search Bar */}
         <div className="max-w-2xl mx-auto mb-8">
-          <div className="flex flex-col md:flex-row gap-4 bg-white/10 backdrop-blur-sm p-2 rounded-xl">
+          <form onSubmit={handleSubmit} className="flex flex-col md:flex-row gap-4 bg-white/10 backdrop-blur-sm p-2 rounded-xl">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white h-5 w-5" />
               <Input
@@ -44,12 +49,16 @@ const HeroSection = ({ searchQuery, setSearchQuery }: HeroSectionProps) => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-white text-gray-800 border-0 focus:ring-2 focus:ring-yellow-400"
+                ref={searchInputRef}
               />
             </div>
-            <Button className="bg-yellow-500 hover:bg-yellow-600 text-gray-800 font-semibold px-8">
+            <Button
+              className="bg-yellow-500 hover:bg-yellow-600 text-gray-800 font-semibold px-8"
+              type="submit"
+            >
               Cari Sekarang
             </Button>
-          </div>
+          </form>
         </div>
 
         {/* Quick Stats */}

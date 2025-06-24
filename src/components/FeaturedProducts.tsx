@@ -1,7 +1,30 @@
-
 import ProductCard from "./ProductCard";
 
-const FeaturedProducts = () => {
+interface FeaturedProductsProps {
+  searchQuery: string;
+  selectedCategory: string | null;
+  priceRange: [number, number];
+  selectedLocation: string | null;
+}
+
+const categoryMap: Record<string, string[]> = {
+  "Bibit & Benih": ["Bibit"],
+  "Pupuk & Pestisida": ["Pupuk", "Pestisida"],
+  "Alat Pertanian": ["Cangkul", "Sprayer", "Alat"],
+  "Hasil Panen": ["Panen", "Jagung", "Cabai"],
+  "Pakan Ternak": ["Pakan"],
+  "Tanaman Hias": ["Tanaman"],
+};
+
+const highlightText = (text: string, query: string) => {
+  if (!query) return text;
+  const regex = new RegExp(`(${query})`, 'gi');
+  return text.split(regex).map((part, i) =>
+    regex.test(part) ? <span key={i} className="bg-yellow-200 text-green-900 font-bold rounded px-1">{part}</span> : part
+  );
+};
+
+const FeaturedProducts = ({ searchQuery, selectedCategory, priceRange, selectedLocation }: FeaturedProductsProps) => {
   const featuredProducts = [
     {
       id: 1,
@@ -80,6 +103,22 @@ const FeaturedProducts = () => {
     }
   ];
 
+  const filteredProducts = featuredProducts.filter(product => {
+    // Filter search
+    const matchSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    // Filter kategori
+    let matchCategory = true;
+    if (selectedCategory) {
+      const keywords = categoryMap[selectedCategory] || [];
+      matchCategory = keywords.some(kw => product.name.toLowerCase().includes(kw.toLowerCase()));
+    }
+    // Filter harga
+    const matchPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+    // Filter lokasi
+    const matchLocation = !selectedLocation || product.location === selectedLocation;
+    return matchSearch && matchCategory && matchPrice && matchLocation;
+  });
+
   return (
     <section className="py-16 px-4 bg-gray-50">
       <div className="max-w-6xl mx-auto">
@@ -93,9 +132,17 @@ const FeaturedProducts = () => {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {filteredProducts.length > 0 ? filteredProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={{
+                ...product,
+                name: highlightText(product.name, searchQuery)
+              }}
+            />
+          )) : (
+            <div className="col-span-3 text-center text-gray-500 py-12">Produk tidak ditemukan.</div>
+          )}
         </div>
 
         <div className="text-center mt-12">
