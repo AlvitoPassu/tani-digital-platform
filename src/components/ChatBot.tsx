@@ -10,7 +10,7 @@ const ChatBot = () => {
   const [activeTab, setActiveTab] = useState("gemini");
 
   return (
-    <Card className="h-[600px] shadow-xl border-gray-200">
+    <Card className="h-[600px] shadow-xl border-gray-200 pb-12">
       <CardHeader className="border-b bg-gradient-to-r from-green-50 to-emerald-50">
         <CardTitle className="flex items-center gap-2">
           <MessageCircle className="h-6 w-6 text-green-600" />

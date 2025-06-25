@@ -7,6 +7,10 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
+import FarmerDashboard from "./pages/FarmerDashboard";
+import BuyerDashboard from "./pages/BuyerDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import AIAssistantDashboard from "./pages/AIAssistantDashboard";
 import Auth from "./pages/Auth";
 import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
@@ -28,6 +32,38 @@ const App = () => (
               element={
                 <ProtectedRoute requireAuth={true}>
                   <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/farmer-dashboard" 
+              element={
+                <ProtectedRoute requireAuth={true} requiredRole="farmer">
+                  <FarmerDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/buyer-dashboard" 
+              element={
+                <ProtectedRoute requireAuth={true} requiredRole="buyer">
+                  <BuyerDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin-dashboard" 
+              element={
+                <ProtectedRoute requireAuth={true} requiredRole="admin">
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/ai-assistant" 
+              element={
+                <ProtectedRoute requireAuth={true}>
+                  <AIAssistantDashboard />
                 </ProtectedRoute>
               } 
             />

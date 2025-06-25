@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useRef } from 'r
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { clearSupabaseSession } from '@/lib/utils';
 
 export type UserRole = 'admin' | 'buyer' | 'farmer';
 
@@ -23,6 +24,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name: string, role: UserRole) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  clearInvalidSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -45,6 +47,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Add refs to prevent infinite loops
   const fetchingProfile = useRef(false);
   const lastFetchedUserId = useRef<string | null>(null);
+
+  // Function to clear invalid session
+  const clearInvalidSession = async () => {
+    try {
+      console.log('Clearing invalid session...');
+      await supabase.auth.signOut();
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      lastFetchedUserId.current = null;
+      
+      // Clear localStorage using utility function
+      clearSupabaseSession();
+      
+      toast({
+        title: "Session Diperbarui",
+        description: "Silakan login kembali untuk melanjutkan.",
+      });
+    } catch (error) {
+      console.error('Error clearing session:', error);
+    }
+  };
 
   const fetchProfile = async (userId: string) => {
     // Prevent multiple simultaneous fetches for the same user
@@ -154,6 +178,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (!isMounted) return;
         
+        // Handle token refresh errors
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          console.log('Token refresh failed, clearing session...');
+          await clearInvalidSession();
+          return;
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -178,6 +209,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (error) {
           console.error('Error getting session:', error);
+          
+          // Handle refresh token errors
+          if (error.message.includes('Invalid Refresh Token') || error.message.includes('Refresh Token Not Found')) {
+            console.log('Invalid refresh token detected, clearing session...');
+            await clearInvalidSession();
+            return;
+          }
         } else {
           console.log('Initial session check:', session?.user?.email || 'no session');
           
@@ -194,6 +232,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (error) {
         console.error('Error in getInitialSession:', error);
+        
+        // Handle refresh token errors in catch block
+        if (error instanceof Error && (
+          error.message.includes('Invalid Refresh Token') || 
+          error.message.includes('Refresh Token Not Found')
+        )) {
+          console.log('Invalid refresh token detected in catch, clearing session...');
+          await clearInvalidSession();
+          return;
+        }
+        
         if (isMounted) {
           setLoading(false);
         }
@@ -336,7 +385,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     signUp,
     signIn,
-    signOut
+    signOut,
+    clearInvalidSession
   };
 
   return (

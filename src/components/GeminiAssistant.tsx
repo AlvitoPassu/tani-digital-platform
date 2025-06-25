@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,7 +132,7 @@ const GeminiAssistant = () => {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <Card className="h-full flex flex-col">
       <div className="p-4 border-b">
         <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-purple-600" />
@@ -154,100 +153,100 @@ const GeminiAssistant = () => {
           ))}
         </div>
       </div>
-
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex items-start gap-3 ${
-                message.type === 'user' ? 'flex-row-reverse' : 'flex-row'
-              }`}
-            >
-              <div className={`p-2 rounded-full ${
-                message.type === 'user' 
-                  ? 'bg-green-100 text-green-700' 
-                  : message.type === 'error'
-                  ? 'bg-red-100 text-red-700'
-                  : 'bg-purple-100 text-purple-700'
-              }`}>
-                {message.type === 'user' ? (
-                  <User className="h-4 w-4" />
-                ) : message.type === 'error' ? (
-                  <AlertCircle className="h-4 w-4" />
-                ) : (
+      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+        <ScrollArea className="flex-1 p-4 overflow-x-hidden">
+          <div className="space-y-4">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex items-start gap-3 ${
+                  message.type === 'user' ? 'flex-row-reverse' : 'flex-row'
+                }`}
+              >
+                <div className={`p-2 rounded-full ${
+                  message.type === 'user' 
+                    ? 'bg-green-100 text-green-700' 
+                    : message.type === 'error'
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-purple-100 text-purple-700'
+                }`}>
+                  {message.type === 'user' ? (
+                    <User className="h-4 w-4" />
+                  ) : message.type === 'error' ? (
+                    <AlertCircle className="h-4 w-4" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                </div>
+                <div className={`max-w-full w-fit break-words ${
+                  message.type === 'user' ? 'text-right' : 'text-left'
+                }`}>
+                  {message.type === 'error' ? (
+                    <Alert variant="destructive">
+                      <AlertDescription className="text-sm">
+                        {message.content}
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <Card className={`max-w-full w-fit break-words ${
+                      message.type === 'user'
+                        ? 'bg-green-500 text-white'
+                        : 'bg-white border-purple-200'
+                    }`}>
+                      <CardContent className="p-3">
+                        <p className="text-sm whitespace-pre-line break-words">{message.content}</p>
+                      </CardContent>
+                    </Card>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    {message.timestamp.toLocaleTimeString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+            
+            {isTyping && (
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-full bg-purple-100 text-purple-700">
                   <Sparkles className="h-4 w-4" />
-                )}
+                </div>
+                <Card className="bg-white border-purple-200 max-w-full w-fit">
+                  <CardContent className="p-3">
+                    <div className="flex items-center space-x-2">
+                      <Loader className="h-4 w-4 animate-spin" />
+                      <span className="text-sm">Gemini sedang berpikir...</span>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-              <div className={`max-w-[80%] ${
-                message.type === 'user' ? 'text-right' : 'text-left'
-              }`}>
-                {message.type === 'error' ? (
-                  <Alert variant="destructive">
-                    <AlertDescription className="text-sm">
-                      {message.content}
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  <Card className={`${
-                    message.type === 'user'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-white border-purple-200'
-                  }`}>
-                    <CardContent className="p-3">
-                      <p className="text-sm whitespace-pre-line">{message.content}</p>
-                    </CardContent>
-                  </Card>
-                )}
-                <p className="text-xs text-gray-500 mt-1">
-                  {message.timestamp.toLocaleTimeString()}
-                </p>
-              </div>
-            </div>
-          ))}
-          
-          {isTyping && (
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-full bg-purple-100 text-purple-700">
-                <Sparkles className="h-4 w-4" />
-              </div>
-              <Card className="bg-white border-purple-200">
-                <CardContent className="p-3">
-                  <div className="flex items-center space-x-2">
-                    <Loader className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">Gemini sedang berpikir...</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-
-      <div className="p-4 border-t">
-        <div className="flex gap-2">
-          <Input
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="Tanyakan seputar pertanian..."
-            onKeyPress={(e) => e.key === 'Enter' && sendMessage(inputMessage)}
-            className="flex-1"
-            disabled={isTyping}
-          />
-          <Button 
-            onClick={() => sendMessage(inputMessage)}
-            disabled={!inputMessage.trim() || isTyping}
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            {isTyping ? (
-              <Loader className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
             )}
-          </Button>
+          </div>
+        </ScrollArea>
+        <div className="p-4 border-t bg-white">
+          <div className="flex gap-2">
+            <Input
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder="Tanyakan seputar pertanian..."
+              onKeyPress={(e) => e.key === 'Enter' && sendMessage(inputMessage)}
+              className="flex-1"
+              disabled={isTyping}
+            />
+            <Button 
+              onClick={() => sendMessage(inputMessage)}
+              disabled={!inputMessage.trim() || isTyping}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {isTyping ? (
+                <Loader className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
