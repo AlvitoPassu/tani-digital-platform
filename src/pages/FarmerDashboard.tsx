@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Camera, Calendar, TrendingUp, ShoppingCart, Package, AlertTriangle, Leaf, Droplets, Sun, Thermometer, BarChart3, MapPin } from "lucide-react";
@@ -9,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 
 const FarmerDashboard = () => {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [weatherData] = useState({
     temperature: 28,
     humidity: 75,
@@ -119,29 +121,52 @@ const FarmerDashboard = () => {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-600 mb-3">
-                Rekomendasi tanaman berdasarkan musim dan cuaca
+                Dapatkan rekomendasi tanaman yang cocok ditanam bulan depan berdasarkan musim dan cuaca.
               </p>
               <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                Lihat Rekomendasi
+                Lihat Rekomendasi Bulan Depan
               </Button>
             </CardContent>
           </Card>
 
-          {/* Belanja Alat */}
+          {/* Belanja Pupuk & Alat */}
           <Card className="hover:shadow-lg transition-all duration-300 border-yellow-200 bg-white">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <ShoppingCart className="h-5 w-5 text-yellow-600" />
-                Belanja Alat
+                Belanja Pupuk & Alat
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-600 mb-3">
-                Pupuk, pestisida, dan alat berkebun berkualitas
+                Cari dan beli pupuk, pestisida, serta alat berkebun sederhana untuk merawat tanaman Anda.
               </p>
-              <Button className="w-full bg-yellow-600 hover:bg-yellow-700">
+              <Button className="w-full bg-yellow-600 hover:bg-yellow-700" onClick={() => window.location.href = '/search?category=pupuk-alat'}>
                 Belanja Sekarang
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Toko Saya - Fitur Jual Produk */}
+          <Card className="hover:shadow-lg transition-all duration-300 border-orange-200 bg-white">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Package className="h-5 w-5 text-orange-600" />
+                Toko Saya
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 mb-3">
+                Buka toko Anda dan tambahkan produk hasil panen untuk dijual di platform ini.
+              </p>
+              <div className="space-y-2">
+                <Button className="w-full bg-orange-600 hover:bg-orange-700" onClick={() => navigate('/my-store')}>
+                  Kelola Toko & Produk
+                </Button>
+                <Button variant="outline" className="w-full" onClick={() => navigate('/add-product')}>
+                  Tambah Produk Baru
+                </Button>
+              </div>
             </CardContent>
           </Card>
 

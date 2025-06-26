@@ -197,8 +197,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setProfile(null);
           lastFetchedUserId.current = null;
         }
-        
-        setLoading(false);
       }
     );
 
@@ -214,7 +212,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (error.message.includes('Invalid Refresh Token') || error.message.includes('Refresh Token Not Found')) {
             console.log('Invalid refresh token detected, clearing session...');
             await clearInvalidSession();
-            return;
           }
         } else {
           console.log('Initial session check:', session?.user?.email || 'no session');
@@ -226,8 +223,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (session?.user) {
               await fetchProfile(session.user.id);
             }
-            
-            setLoading(false);
           }
         }
       } catch (error) {
@@ -240,9 +235,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         )) {
           console.log('Invalid refresh token detected in catch, clearing session...');
           await clearInvalidSession();
-          return;
         }
-        
+      } finally {
         if (isMounted) {
           setLoading(false);
         }
@@ -363,6 +357,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         setSession(null);
         lastFetchedUserId.current = null;
+        clearSupabaseSession();
         toast({
           title: "Logout Berhasil",
           description: "Anda telah keluar dari akun",

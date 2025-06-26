@@ -15,6 +15,8 @@ import Auth from "./pages/Auth";
 import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
 import SearchResults from "./pages/SearchResults";
+import MyStore from "./pages/my-store";
+import AddProduct from "./pages/add-product";
 
 const queryClient = new QueryClient();
 
@@ -96,6 +98,22 @@ const App = () => (
               element={
                 <ProtectedRoute requireAuth={false}>
                   <Auth />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/my-store" 
+              element={
+                <ProtectedRoute requireAuth={true} requiredRole="farmer">
+                  <MyStore />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/add-product" 
+              element={
+                <ProtectedRoute requireAuth={true} requiredRole="farmer">
+                  <AddProduct />
                 </ProtectedRoute>
               } 
             />
