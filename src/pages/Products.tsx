@@ -6,8 +6,9 @@ import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Search, MapPin, Filter, ShoppingCart, Eye, Heart } from 'lucide-react';
-import { AuthContext } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
+import CategoryList from "@/components/CategoryList";
 
 interface Product {
   id: string;
@@ -32,7 +33,7 @@ interface Product {
 }
 
 const Products: React.FC = () => {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const { toast } = useToast();
   
   const [products, setProducts] = useState<Product[]>([]);
@@ -127,7 +128,7 @@ const Products: React.FC = () => {
     'Banten': ['Serang', 'Tangerang', 'Cilegon', 'Lebak', 'Pandeglang']
   };
   
-  const categories = ['Semua', 'Beras', 'Sayuran', 'Buah', 'Bumbu', 'Umbi-umbian', 'Kacang-kacangan'];
+  const categories = ['all', 'Beras', 'Sayuran', 'Buah', 'Bumbu', 'Umbi-umbian', 'Kacang-kacangan'];
 
   useEffect(() => {
     setProducts(sampleProducts);
@@ -157,7 +158,7 @@ const Products: React.FC = () => {
     }
 
     // Filter by category
-    if (selectedCategory && selectedCategory !== 'Semua') {
+    if (selectedCategory && selectedCategory !== 'all') {
       filtered = filtered.filter(product => product.category === selectedCategory);
     }
 
@@ -248,6 +249,7 @@ const Products: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Produk Pertanian</h1>
             <p className="text-gray-600">Temukan produk pertanian segar dari petani lokal</p>
           </div>
+          <CategoryList selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
 
           {/* Filters Section */}
           <Card className="mb-6">
@@ -276,7 +278,7 @@ const Products: React.FC = () => {
                     <SelectValue placeholder="Pilih Provinsi" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Semua Provinsi</SelectItem>
+                    <SelectItem value="all-provinces">Semua Provinsi</SelectItem>
                     {provinces.map(province => (
                       <SelectItem key={province} value={province}>{province}</SelectItem>
                     ))}
@@ -289,7 +291,7 @@ const Products: React.FC = () => {
                     <SelectValue placeholder="Pilih Kota" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Semua Kota</SelectItem>
+                    <SelectItem value="all-cities">Semua Kota</SelectItem>
                     {selectedProvince && cities[selectedProvince as keyof typeof cities]?.map(city => (
                       <SelectItem key={city} value={city}>{city}</SelectItem>
                     ))}
@@ -302,7 +304,8 @@ const Products: React.FC = () => {
                     <SelectValue placeholder="Pilih Kategori" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map(category => (
+                    <SelectItem value="all">Semua Kategori</SelectItem>
+                    {categories.filter(c => c !== 'all').map(category => (
                       <SelectItem key={category} value={category}>{category}</SelectItem>
                     ))}
                   </SelectContent>
@@ -316,7 +319,7 @@ const Products: React.FC = () => {
                     <SelectValue placeholder="Rentang Harga" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Semua Harga</SelectItem>
+                    <SelectItem value="all-prices">Semua Harga</SelectItem>
                     <SelectItem value="0-20000">Dibawah Rp 20.000</SelectItem>
                     <SelectItem value="20000-50000">Rp 20.000 - Rp 50.000</SelectItem>
                     <SelectItem value="50000-100000">Rp 50.000 - Rp 100.000</SelectItem>
@@ -330,7 +333,7 @@ const Products: React.FC = () => {
                     <SelectValue placeholder="Urutkan" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Urutan Default</SelectItem>
+                    <SelectItem value="default">Urutan Default</SelectItem>
                     <SelectItem value="price-low">Harga Terendah</SelectItem>
                     <SelectItem value="price-high">Harga Tertinggi</SelectItem>
                     <SelectItem value="rating">Rating Tertinggi</SelectItem>

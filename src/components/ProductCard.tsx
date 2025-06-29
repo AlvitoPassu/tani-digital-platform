@@ -55,7 +55,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
       alert("Silakan login terlebih dahulu untuk menambahkan produk ke keranjang");
       return;
     }
-    addToCart({ productId: product.id, quantity: 1 });
+    
+    // Convert product data to match the expected format
+    const productData = {
+      id: product.id,
+      name: typeof product.name === 'string' ? product.name : product.name.toString(),
+      price: product.price,
+      image_url: product.image,
+      unit: 'pcs'
+    };
+    
+    addToCart({ productId: product.id, quantity: 1, product: productData });
   };
 
   return (

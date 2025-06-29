@@ -1,4 +1,3 @@
-
 import { ShoppingCart, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
@@ -39,9 +38,7 @@ const Cart = () => {
   }
 
   const handleCheckout = () => {
-    // TODO: Implement checkout functionality
-    console.log("Proceeding to checkout with items:", cartItems);
-    alert("Fitur checkout akan segera hadir!");
+    navigate('/checkout');
   };
 
   if (isLoading) {
