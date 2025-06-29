@@ -135,6 +135,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await createProfileFromUser(userId);
       }
     } catch (error) {
+      toast({
+        title: "Peringatan",
+        description: "Profile user tidak ditemukan di database, dibuat default. Mohon cek trigger Supabase.",
+        variant: "destructive"
+      });
+      const defaultProfile: Profile = {
+        id: userId,
+        name: 'User',
+        role: 'buyer',
+        address: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      setProfile(defaultProfile);
     } finally {
       fetchingProfile.current = false;
     }
@@ -165,6 +179,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .select()
         .single();
       if (profileError) {
+        toast({
+          title: "Peringatan",
+          description: "Profile user tidak ditemukan di database, dibuat default. Mohon cek trigger Supabase.",
+          variant: "destructive"
+        });
         const defaultProfile: Profile = {
           id: userId,
           name: 'User',
@@ -184,6 +203,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile(newProfile);
       }
     } catch (error) {
+      toast({
+        title: "Peringatan",
+        description: "Profile user tidak ditemukan di database, dibuat default. Mohon cek trigger Supabase.",
+        variant: "destructive"
+      });
       const defaultProfile: Profile = {
         id: userId,
         name: 'User',
@@ -451,3 +475,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
+
+export async function signUpWithProfile(email: string, password: string, role: string) {
+  // 1. Sign up user
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  // 2. Insert profile jika sign up berhasil
+  // Tunggu user.id dari hasil sign up
+  const user = data.user;
+  if (user) {
+    const { error: profileError } = await supabase.from('profiles').insert([
+      {
+        id: user.id,      // id user dari Supabase Auth
+        email: user.email,
+        role: role,       // role yang dipilih user saat sign up
+      },
+    ]);
+    if (profileError) {
+      throw profileError;
+    }
+  }
+
+  return data;
+}
