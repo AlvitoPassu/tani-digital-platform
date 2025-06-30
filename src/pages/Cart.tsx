@@ -1,4 +1,3 @@
-
 import { ShoppingCart, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
@@ -121,7 +120,6 @@ const Cart = () => {
                 totalItems={totalItems}
                 totalPrice={totalPrice}
                 onClearCart={clearCart}
-                onCheckout={handleCheckout}
                 isClearing={isClearing}
               />
             </div>

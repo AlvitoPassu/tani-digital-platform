@@ -1,24 +1,28 @@
-
 import { ShoppingBag, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useNavigate } from "react-router-dom";
 
 interface CartSummaryProps {
   totalItems: number;
   totalPrice: number;
   onClearCart: () => void;
-  onCheckout: () => void;
   isClearing: boolean;
 }
 
-const CartSummary = ({ totalItems, totalPrice, onClearCart, onCheckout, isClearing }: CartSummaryProps) => {
+const CartSummary = ({ totalItems, totalPrice, onClearCart, isClearing }: CartSummaryProps) => {
+  const navigate = useNavigate();
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       minimumFractionDigits: 0
     }).format(price);
+  };
+
+  const handleCheckout = () => {
+    navigate("/checkout");
   };
 
   return (
@@ -45,7 +49,7 @@ const CartSummary = ({ totalItems, totalPrice, onClearCart, onCheckout, isCleari
         <div className="space-y-2">
           <Button 
             className="w-full bg-green-600 hover:bg-green-700"
-            onClick={onCheckout}
+            onClick={handleCheckout}
             disabled={totalItems === 0}
           >
             Lanjut ke Pembayaran
