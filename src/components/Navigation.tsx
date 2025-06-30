@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, ShoppingCart, User, Bell, Menu, Leaf, X, LogOut, Settings, Wrench } from "lucide-react";
+import { Search, ShoppingCart, User, Bell, Menu, Leaf, X, LogOut, Settings, Wrench, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,6 +45,16 @@ const Navigation = () => {
     }
   };
 
+  const getDashboardLink = () => {
+    if (!profile) return "/dashboard";
+    switch (profile.role) {
+      case 'farmer': return "/farmer-dashboard";
+      case 'buyer': return "/buyer-dashboard";
+      case 'admin': return "/admin-dashboard";
+      default: return "/dashboard";
+    }
+  };
+
   return (
     <nav className="bg-white shadow-sm border-b border-green-200 fixed top-0 left-0 right-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -67,9 +77,15 @@ const Navigation = () => {
               Promo
             </button>
             {user && (
-              <Link to="/dashboard" className="text-gray-700 hover:text-green-600 transition-colors">
-                AI Assistant
-              </Link>
+              <>
+                <Link to={getDashboardLink()} className="text-gray-700 hover:text-green-600 transition-colors">
+                  Dashboard
+                </Link>
+                <Link to="/ai-assistant" className="text-gray-700 hover:text-green-600 transition-colors flex items-center gap-1">
+                  <Sparkles className="h-4 w-4" />
+                  AI Assistant
+                </Link>
+              </>
             )}
           </div>
 
@@ -171,7 +187,11 @@ const Navigation = () => {
             <button type="button" className="block py-2 text-gray-700 hover:text-green-600 w-full text-left">Promo</button>
             {user && (
               <>
-                <Link to="/dashboard" className="block py-2 text-gray-700 hover:text-green-600">AI Assistant</Link>
+                <Link to={getDashboardLink()} className="block py-2 text-gray-700 hover:text-green-600">Dashboard</Link>
+                <Link to="/ai-assistant" className="block py-2 text-gray-700 hover:text-green-600 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  AI Assistant
+                </Link>
                 {profile?.role === 'farmer' && (
                   <Link to="/farmer-tools" className="block py-2 text-gray-700 hover:text-green-600">Alat Petani</Link>
                 )}
