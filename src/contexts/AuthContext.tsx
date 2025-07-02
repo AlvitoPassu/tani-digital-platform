@@ -26,7 +26,7 @@ interface AuthContextType {
   clearInvalidSession: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -79,21 +79,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Function to clear invalid session
   const clearInvalidSession = async () => {
     try {
+fitur-cari-produk
+      console.log('Clearing invalid session...');
+      await supabase.auth.signOut();
+
       if (isSupabaseAvailable() && supabase) {
         await supabase.auth.signOut();
       }
+main
       setUser(null);
       setProfile(null);
       setSession(null);
       lastFetchedUserId.current = null;
+fitur-cari-produk
+      
+      // Clear localStorage using utility function
+      clearSupabaseSession();
+      
       clearSupabaseSession();
       clearLocalAuth();
+main
       toast({
         title: "Session Diperbarui",
         description: "Silakan login kembali untuk melanjutkan.",
       });
     } catch (error) {
+fitur-cari-produk
+      console.error('Error clearing session:', error);
+
       // Optional: log error
+main
     }
   };
 
@@ -239,6 +254,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!isMounted) return;
+fitur-cari-produk
+        
+        // Handle token refresh errors
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          console.log('Token refresh failed, clearing session...');
+          await clearInvalidSession();
+          return;
+        }
+        
+
+main
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -249,22 +275,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setProfile(null);
           lastFetchedUserId.current = null;
         }
+fitur-cari-produk
+
         setLoading(false);
+main
       }
     );
     
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
+fitur-cari-produk
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          
+          // Handle refresh token errors
+          if (error.message.includes('Invalid Refresh Token') || error.message.includes('Refresh Token Not Found')) {
+            console.log('Invalid refresh token detected, clearing session...');
+            await clearInvalidSession();
+          }
+        } else {
+          console.log('Initial session check:', session?.user?.email || 'no session');
+          
+main
           if (isMounted) {
             setSession(session);
             setUser(session?.user ?? null);
             if (session?.user) {
               await fetchProfile(session.user.id);
             }
+fitur-cari-produk
+          }
+        }
+      } catch (error) {
+        console.error('Error in getInitialSession:', error);
+        
+        // Handle refresh token errors in catch block
+        if (error instanceof Error && (
+          error.message.includes('Invalid Refresh Token') || 
+          error.message.includes('Refresh Token Not Found')
+        )) {
+          console.log('Invalid refresh token detected in catch, clearing session...');
+          await clearInvalidSession();
+        }
+      } finally {
             setLoading(false);
         }
       } catch (error) {
+main
         if (isMounted) {
           setLoading(false);
         }
@@ -338,6 +397,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
       });
+fitur-cari-produk
+
+      console.log('Sign up response:', { data, error });
+
+      if (!error && data.user) {
+        // Insert profile ke tabel profiles
+        const { error: profileError } = await supabase.from('profiles').insert({
+          id: data.user.id,
+          name,
+          role
+        });
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+        }
+      }
+
+main
       if (error) {
         toast({
           title: "Error Registrasi",
@@ -439,8 +515,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
+fitur-cari-produk
+      console.log('Signing out...');
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+        toast({
+          title: "Error",
+          description: "Terjadi kesalahan saat logout.",
+          variant: "destructive"
+        });
+      } else {
+        setProfile(null);
+        setUser(null);
+        setSession(null);
+        lastFetchedUserId.current = null;
+        clearSupabaseSession();
+        toast({
+          title: "Logout Berhasil",
+          description: "Anda telah keluar dari akun",
+        });
       if (isSupabaseAvailable() && supabase) {
         await supabase.auth.signOut();
+main
       }
       setUser(null);
       setProfile(null);
@@ -460,6 +557,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+fitur-cari-produk
+  const value = {
+    user,
+    profile,
+    session,
+    loading,
+    signUp,
+    signIn,
+    signOut,
+    clearInvalidSession
+  };
+
+main
   return (
     <AuthContext.Provider value={{
       user,

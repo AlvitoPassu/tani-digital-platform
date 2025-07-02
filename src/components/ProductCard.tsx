@@ -1,8 +1,9 @@
-import { Star, MapPin, ShoppingCart, Heart } from "lucide-react";
+import { Star, MapPin, ShoppingCart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Product {
   id: number;
@@ -18,11 +19,7 @@ interface Product {
   isDiscount: boolean;
 }
 
-interface ProductCardProps {
-  product: Product;
-}
-
-const ProductCard = ({ product }: ProductCardProps) => {
+const ProductCard = ({ product }: { product: Product }) => {
   const { user } = useAuth();
   const { addToCart, isAddingToCart } = useCart();
 
@@ -88,15 +85,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
             -{discountPercentage}%
           </div>
         )}
-        
-        {/* Wishlist Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute bottom-3 right-3 bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <Heart className="h-4 w-4" />
-        </Button>
       </div>
 
       <CardContent className="p-4">

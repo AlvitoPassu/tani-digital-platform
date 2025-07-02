@@ -1,4 +1,8 @@
+fitur-cari-produk
+import { useState, useEffect } from "react";
+
 import { useState } from "react";
+main
 import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart, Package, MessageCircle, Heart, Star, TrendingUp, CreditCard, Truck, Clock, MapPin, Filter, Search } from "lucide-react";
@@ -6,9 +10,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+fitur-cari-produk
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const BuyerDashboard = () => {
   const { profile } = useAuth();
+  const navigate = useNavigate();
+
+
+const BuyerDashboard = () => {
+  const { profile } = useAuth();
+main
   const [recentOrders] = useState([
     {
       id: "ORD-001",
@@ -27,12 +40,16 @@ const BuyerDashboard = () => {
       delivered: "2024-01-12"
     }
   ]);
+fitur-cari-produk
+  const [searchQuery, setSearchQuery] = useState("");
+
 
   const [favoriteProducts] = useState([
     { name: "Cabai Merah Segar", price: 25000, rating: 4.8, image: "🌶️" },
     { name: "Tomat Organik", price: 18000, rating: 4.9, image: "🍅" },
     { name: "Kentang Premium", price: 22000, rating: 4.7, image: "🥔" }
   ]);
+main
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -115,6 +132,30 @@ const BuyerDashboard = () => {
                 Cari dan beli produk pertanian segar dari petani lokal
               </p>
               <div className="space-y-2">
+fitur-cari-produk
+                <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => navigate("/")}>
+                  Mulai Belanja
+                </Button>
+                <form
+                  onSubmit={e => {
+                    e.preventDefault();
+                    if (searchQuery.trim()) navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                  }}
+                  className="flex gap-2"
+                >
+                  <input
+                    type="text"
+                    placeholder="Cari produk..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="flex-1 border rounded px-3 py-2"
+                  />
+                  <Button type="submit" variant="outline">
+                    <Search className="h-4 w-4 mr-2" />
+                    Cari Produk
+                  </Button>
+                </form>
+
                 <Button className="w-full bg-green-600 hover:bg-green-700">
                   Mulai Belanja
                 </Button>
@@ -122,6 +163,7 @@ const BuyerDashboard = () => {
                   <Search className="h-4 w-4 mr-2" />
                   Cari Produk
                 </Button>
+main
               </div>
             </CardContent>
           </Card>
@@ -159,6 +201,8 @@ const BuyerDashboard = () => {
             </CardContent>
           </Card>
 
+fitur-cari-produk
+
           {/* Produk Favorit */}
           <Card className="hover:shadow-lg transition-all duration-300 border-pink-200 bg-white">
             <CardHeader className="pb-3">
@@ -189,6 +233,7 @@ const BuyerDashboard = () => {
             </CardContent>
           </Card>
 
+main
           {/* Riwayat Belanja */}
           <Card className="hover:shadow-lg transition-all duration-300 border-purple-200 bg-white">
             <CardHeader className="pb-3">
@@ -250,7 +295,71 @@ const BuyerDashboard = () => {
               </div>
             </CardContent>
           </Card>
+fitur-cari-produk
+
+          {/* Rekomendasi Produk */}
+          <Card className="hover:shadow-lg transition-all duration-300 border-yellow-200 bg-white">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Star className="h-5 w-5 text-yellow-600" />
+                Rekomendasi untuk Anda
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="text-center p-4 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg">
+                  <p className="text-sm font-medium text-gray-800 mb-2">
+                    Berdasarkan riwayat belanja Anda
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    Produk segar yang baru tiba dari petani terpercaya
+                  </p>
+                </div>
+                <Button className="w-full bg-yellow-600 hover:bg-yellow-700">
+                  Lihat Rekomendasi
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Notifikasi Terbaru */}
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-800">
+              <Clock className="h-5 w-5" />
+              Notifikasi Terbaru
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-3 bg-blue-100 rounded-lg">
+                <Truck className="h-4 w-4 text-blue-600" />
+                <div>
+                  <p className="text-sm font-medium text-blue-800">Order ORD-001 sedang dalam pengiriman</p>
+                  <p className="text-xs text-blue-600">Estimasi tiba: 2-3 hari lagi</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-green-100 rounded-lg">
+                <Package className="h-4 w-4 text-green-600" />
+                <div>
+                  <p className="text-sm font-medium text-green-800">Order ORD-002 telah diterima</p>
+                  <p className="text-xs text-green-600">Terima kasih telah berbelanja!</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-purple-100 rounded-lg">
+                <Star className="h-4 w-4 text-purple-600" />
+                <div>
+                  <p className="text-sm font-medium text-purple-800">Produk favorit Anda tersedia kembali</p>
+                  <p className="text-xs text-purple-600">Cabai Merah Segar - Stok terbatas</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        </div>
+main
       </div>
     </div>
   );

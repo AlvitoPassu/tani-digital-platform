@@ -1,4 +1,7 @@
 import { useState } from "react";
+fitur-cari-produk
+import { useNavigate } from "react-router-dom";
+main
 import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Camera, Calendar, TrendingUp, ShoppingCart, Package, AlertTriangle, Leaf, Droplets, Sun, Thermometer, BarChart3, MapPin } from "lucide-react";
@@ -9,6 +12,10 @@ import { Progress } from "@/components/ui/progress";
 
 const FarmerDashboard = () => {
   const { profile } = useAuth();
+fitur-cari-produk
+  const navigate = useNavigate();
+
+main
   const [weatherData] = useState({
     temperature: 28,
     humidity: 75,
@@ -119,32 +126,78 @@ const FarmerDashboard = () => {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-600 mb-3">
+fitur-cari-produk
+                Dapatkan rekomendasi tanaman yang cocok ditanam bulan depan berdasarkan musim dan cuaca.
+              </p>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                Lihat Rekomendasi Bulan Depan
+
                 Rekomendasi tanaman berdasarkan musim dan cuaca
               </p>
               <Button className="w-full bg-blue-600 hover:bg-blue-700">
                 Lihat Rekomendasi
+main
               </Button>
             </CardContent>
           </Card>
 
+fitur-cari-produk
+          {/* Belanja Pupuk & Alat */}
+
           {/* Belanja Alat */}
+main
           <Card className="hover:shadow-lg transition-all duration-300 border-yellow-200 bg-white">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <ShoppingCart className="h-5 w-5 text-yellow-600" />
+fitur-cari-produk
+                Belanja Pupuk & Alat
                 Belanja Alat
+main
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-600 mb-3">
+fitur-cari-produk
+                Cari dan beli pupuk, pestisida, serta alat berkebun sederhana untuk merawat tanaman Anda.
+              </p>
+              <Button className="w-full bg-yellow-600 hover:bg-yellow-700" onClick={() => window.location.href = '/search?category=pupuk-alat'}>
+
                 Pupuk, pestisida, dan alat berkebun berkualitas
               </p>
               <Button className="w-full bg-yellow-600 hover:bg-yellow-700">
+main
                 Belanja Sekarang
               </Button>
             </CardContent>
           </Card>
 
+fitur-cari-produk
+          {/* Toko Saya - Fitur Jual Produk */}
+          <Card className="hover:shadow-lg transition-all duration-300 border-orange-200 bg-white">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Package className="h-5 w-5 text-orange-600" />
+                Toko Saya
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600 mb-3">
+                Buka toko Anda dan tambahkan produk hasil panen untuk dijual di platform ini.
+              </p>
+              <div className="space-y-2">
+                <Button className="w-full bg-orange-600 hover:bg-orange-700" onClick={() => navigate('/my-store')}>
+                  Kelola Toko & Produk
+                </Button>
+                <Button variant="outline" className="w-full" onClick={() => navigate('/add-product')}>
+                  Tambah Produk Baru
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+
+main
           {/* Statistik Kebun */}
           <Card className="hover:shadow-lg transition-all duration-300 border-indigo-200 bg-white">
             <CardHeader className="pb-3">
@@ -247,6 +300,23 @@ const FarmerDashboard = () => {
                   <p className="text-xs text-red-600">Terakhir disiram: 2 hari yang lalu</p>
                 </div>
               </div>
+fitur-cari-produk
+              <div className="flex items-center gap-3 p-3 bg-orange-100 rounded-lg">
+                <Package className="h-4 w-4 text-orange-600" />
+                <div>
+                  <p className="text-sm font-medium text-orange-800">Pupuk NPK habis dalam 3 hari</p>
+                  <p className="text-xs text-orange-600">Stok tersisa: 2 kg</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-blue-100 rounded-lg">
+                <Calendar className="h-4 w-4 text-blue-600" />
+                <div>
+                  <p className="text-sm font-medium text-blue-800">Jadwal panen tomat minggu depan</p>
+                  <p className="text-xs text-blue-600">Estimasi hasil: 500 kg</p>
+                </div>
+              </div>
+
+main
             </div>
           </CardContent>
         </Card>

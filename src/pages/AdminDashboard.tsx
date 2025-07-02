@@ -6,9 +6,39 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+fitur-cari-produk
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import UserManagement from "@/components/UserManagement";
+import OrderManagement from "@/components/OrderManagement";
+import * as XLSX from "xlsx";
+
+const roles = [
+  { value: "admin", label: "Admin" },
+  { value: "farmer", label: "Petani" },
+  { value: "buyer", label: "Pembeli" },
+];
 
 const AdminDashboard = () => {
   const { profile } = useAuth();
+
+  // Fetch user statistics from Supabase
+  const { data: userStats, isLoading: isUserStatsLoading } = useQuery({
+    queryKey: ["user-stats"],
+    queryFn: async () => {
+      // Fetch all profiles
+      const { data, error } = await supabase.from("profiles").select("role");
+      if (error) throw error;
+      const totalUsers = data.length;
+      const totalPetani = data.filter((u: any) => u.role === "farmer").length;
+      const totalPembeli = data.filter((u: any) => u.role === "buyer").length;
+      return { totalUsers, totalPetani, totalPembeli };
+    },
+  });
+
+const AdminDashboard = () => {
+  const { profile } = useAuth();
+main
   const [stats] = useState({
     totalUsers: 1247,
     totalOrders: 892,
@@ -25,6 +55,92 @@ const AdminDashboard = () => {
     { type: "system", action: "Backup database selesai", time: "15 menit yang lalu" }
   ]);
 
+fitur-cari-produk
+  const [showUserManagement, setShowUserManagement] = useState(false);
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [addUserForm, setAddUserForm] = useState({ name: "", email: "", password: "", role: "buyer" });
+  const [addUserLoading, setAddUserLoading] = useState(false);
+  const [addUserNotif, setAddUserNotif] = useState<string | null>(null);
+  const [showOrderManagement, setShowOrderManagement] = useState(false);
+
+  // Fungsi tambah user
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddUserLoading(true);
+    setAddUserNotif(null);
+
+    // Validasi sederhana
+    if (!addUserForm.name || !addUserForm.email || !addUserForm.password || !addUserForm.role) {
+      setAddUserNotif('Semua field wajib diisi.');
+      setAddUserLoading(false);
+      return;
+    }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(addUserForm.email)) {
+      setAddUserNotif('Format email tidak valid.');
+      setAddUserLoading(false);
+      return;
+    }
+    if (addUserForm.password.length < 6) {
+      setAddUserNotif('Password minimal 6 karakter.');
+      setAddUserLoading(false);
+      return;
+    }
+
+    const res = await fetch('https://kkxhaedaekxosbyzmjit.functions.supabase.co/add-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(addUserForm),
+    });
+    let result: any = {};
+    try {
+      result = await res.json();
+    } catch (err) {
+      setAddUserNotif('Gagal menambah user: Response tidak valid.');
+      setAddUserLoading(false);
+      return;
+    }
+    if (!res.ok) {
+      setAddUserNotif('Gagal menambah user: ' + (result.error || 'Unknown error.')); 
+      setAddUserLoading(false);
+      return;
+    }
+    setAddUserNotif('User berhasil ditambahkan!');
+    setAddUserLoading(false);
+    setAddUserForm({ name: '', email: '', password: '', role: 'buyer' });
+    setTimeout(() => {
+      setShowAddUser(false);
+      setAddUserNotif(null);
+      window.location.reload();
+    }, 1200);
+  };
+
+  // Export data ke Excel (ambil data order dari Supabase langsung)
+  const handleExportExcel = async () => {
+    // Fetch all orders
+    const { data: orders, error } = await supabase
+      .from("orders")
+      .select("id, buyer_id, status, total_amount, created_at, shipping_address, payment_method, notes");
+    if (error || !orders) return;
+    // Fetch buyers
+    const { data: buyers } = await supabase.from("profiles").select("id, name");
+    // Siapkan data untuk export
+    const exportData = orders.map((order: any) => ({
+      ID: order.id,
+      Pembeli: buyers?.find((b: any) => b.id === order.buyer_id)?.name || order.buyer_id,
+      Status: order.status,
+      Total: order.total_amount,
+      Tanggal: order.created_at ? new Date(order.created_at).toLocaleString() : "",
+      Alamat: order.shipping_address || "",
+      MetodeBayar: order.payment_method || "",
+      Catatan: order.notes || ""
+    }));
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Orders");
+    XLSX.writeFile(wb, "orders.xlsx");
+  };
+
+main
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-50">
       <Navigation />
@@ -46,7 +162,12 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm opacity-90">Total Users</p>
+fitur-cari-produk
+                  <p className="text-2xl font-bold">
+                    {isUserStatsLoading ? '...' : userStats?.totalUsers?.toLocaleString()}
+                  </p>
                   <p className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</p>
+main
                 </div>
                 <Users className="h-8 w-8" />
               </div>
@@ -101,6 +222,36 @@ const AdminDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
+fitur-cari-produk
+              {profile?.role === 'admin' ? (
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Total Users:</span>
+                    <Badge variant="outline">{isUserStatsLoading ? '...' : userStats?.totalUsers}</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Petani:</span>
+                    <Badge variant="secondary">{isUserStatsLoading ? '...' : userStats?.totalPetani}</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Pembeli:</span>
+                    <Badge variant="secondary">{isUserStatsLoading ? '...' : userStats?.totalPembeli}</Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => setShowUserManagement(true)}>
+                      Kelola Users
+                    </Button>
+                    <Button variant="outline" className="w-full" onClick={() => setShowAddUser(true)}>
+                      Tambah User
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center text-red-500 font-semibold py-8">
+                  Akses ditolak. Hanya admin yang dapat mengakses fitur ini.
+                </div>
+              )}
+
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm">Total Users:</span>
@@ -123,6 +274,7 @@ const AdminDashboard = () => {
                   </Button>
                 </div>
               </div>
+main
             </CardContent>
           </Card>
 
@@ -149,10 +301,17 @@ const AdminDashboard = () => {
                   <Badge variant="outline">Rp 8.5M</Badge>
                 </div>
                 <div className="space-y-2">
+fitur-cari-produk
+                  <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => setShowOrderManagement(true)}>
+                    Lihat Semua Order
+                  </Button>
+                  <Button variant="outline" className="w-full" onClick={handleExportExcel}>
+
                   <Button className="w-full bg-green-600 hover:bg-green-700">
                     Lihat Semua Order
                   </Button>
                   <Button variant="outline" className="w-full">
+main
                     Export Data
                   </Button>
                 </div>
@@ -366,6 +525,121 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
+fitur-cari-produk
+
+        {/* User Management Modal/Section */}
+        {showUserManagement && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-white rounded-lg shadow-lg max-w-3xl w-full p-6 relative">
+              <button
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl"
+                onClick={() => setShowUserManagement(false)}
+                aria-label="Tutup"
+              >
+                &times;
+              </button>
+              <UserManagement />
+            </div>
+          </div>
+        )}
+        {/* Modal Tambah User */}
+        {showAddUser && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-white rounded-lg shadow-lg max-w-sm w-full p-6 relative">
+              <button
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl"
+                onClick={() => setShowAddUser(false)}
+                aria-label="Tutup"
+              >
+                &times;
+              </button>
+              <h3 className="text-lg font-bold mb-4">Tambah User</h3>
+              <form onSubmit={handleAddUser} className="space-y-3">
+                <div>
+                  <label className="block text-sm mb-1">Nama</label>
+                  <input
+                    className="w-full border rounded px-2 py-1"
+                    value={addUserForm.name}
+                    onChange={e => setAddUserForm(f => ({ ...f, name: e.target.value }))}
+                    required
+                    disabled={addUserLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm mb-1">Email</label>
+                  <input
+                    type="email"
+                    className="w-full border rounded px-2 py-1"
+                    value={addUserForm.email}
+                    onChange={e => setAddUserForm(f => ({ ...f, email: e.target.value }))}
+                    required
+                    disabled={addUserLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm mb-1">Password</label>
+                  <input
+                    type="password"
+                    className="w-full border rounded px-2 py-1"
+                    value={addUserForm.password}
+                    onChange={e => setAddUserForm(f => ({ ...f, password: e.target.value }))}
+                    required
+                    minLength={6}
+                    disabled={addUserLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm mb-1">Role</label>
+                  <select
+                    className="w-full border rounded px-2 py-1"
+                    value={addUserForm.role}
+                    onChange={e => setAddUserForm(f => ({ ...f, role: e.target.value }))}
+                    required
+                    disabled={addUserLoading}
+                  >
+                    {roles.map(r => (
+                      <option key={r.value} value={r.value}>{r.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="pt-2 flex gap-2">
+                  <button
+                    type="submit"
+                    className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 disabled:opacity-60"
+                    disabled={addUserLoading}
+                  >
+                    {addUserLoading ? "Menyimpan..." : "Tambah"}
+                  </button>
+                  <button
+                    type="button"
+                    className="border px-4 py-1 rounded"
+                    onClick={() => setShowAddUser(false)}
+                    disabled={addUserLoading}
+                  >
+                    Batal
+                  </button>
+                </div>
+                {addUserNotif && <div className="text-center text-sm text-green-600 mt-2">{addUserNotif}</div>}
+              </form>
+            </div>
+          </div>
+        )}
+        {/* Modal Order Management */}
+        {showOrderManagement && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full p-6 relative">
+              <button
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl"
+                onClick={() => setShowOrderManagement(false)}
+                aria-label="Tutup"
+              >
+                &times;
+              </button>
+              <OrderManagement />
+            </div>
+          </div>
+        )}
+main
       </div>
     </div>
   );

@@ -5,10 +5,17 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+fitur-cari-produk
+import { Search, MapPin, Filter, ShoppingCart, Eye } from 'lucide-react';
+import { AuthContext } from '../contexts/AuthContext';
+import { useToast } from '../hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
+
 import { Search, MapPin, Filter, ShoppingCart, Eye, Heart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import CategoryList from "@/components/CategoryList";
+main
 
 interface Product {
   id: string;
@@ -31,9 +38,13 @@ interface Product {
   isOrganic: boolean;
   isFresh: boolean;
 }
+fitur-cari-produk
+const Products: React.FC<{ onFavoriteAdded?: () => void }> = ({ onFavoriteAdded }) => {
+  const { user } = useContext(AuthContext);
 
 const Products: React.FC = () => {
   const { user } = useAuth();
+main
   const { toast } = useToast();
   
   const [products, setProducts] = useState<Product[]>([]);
@@ -128,7 +139,11 @@ const Products: React.FC = () => {
     'Banten': ['Serang', 'Tangerang', 'Cilegon', 'Lebak', 'Pandeglang']
   };
   
+fitur-cari-produk
+  const categories = ['Semua', 'Beras', 'Sayuran', 'Buah', 'Bumbu', 'Umbi-umbian', 'Kacang-kacangan'];
+
   const categories = ['all', 'Beras', 'Sayuran', 'Buah', 'Bumbu', 'Umbi-umbian', 'Kacang-kacangan'];
+main
 
   useEffect(() => {
     setProducts(sampleProducts);
@@ -158,7 +173,11 @@ const Products: React.FC = () => {
     }
 
     // Filter by category
+fitur-cari-produk
+    if (selectedCategory && selectedCategory !== 'Semua') {
+
     if (selectedCategory && selectedCategory !== 'all') {
+main
       filtered = filtered.filter(product => product.category === selectedCategory);
     }
 
@@ -216,6 +235,8 @@ const Products: React.FC = () => {
     console.log('View product:', product.id);
   };
 
+fitur-cari-produk
+
   const handleAddToWishlist = (product: Product) => {
     if (user?.role !== 'buyer') {
       toast({
@@ -232,6 +253,7 @@ const Products: React.FC = () => {
     });
   };
 
+main
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -249,7 +271,10 @@ const Products: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Produk Pertanian</h1>
             <p className="text-gray-600">Temukan produk pertanian segar dari petani lokal</p>
           </div>
+fitur-cari-produk
+
           <CategoryList selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
+main
 
           {/* Filters Section */}
           <Card className="mb-6">
@@ -278,7 +303,11 @@ const Products: React.FC = () => {
                     <SelectValue placeholder="Pilih Provinsi" />
                   </SelectTrigger>
                   <SelectContent>
+fitur-cari-produk
+                    <SelectItem value="all">Semua Provinsi</SelectItem>
+
                     <SelectItem value="all-provinces">Semua Provinsi</SelectItem>
+main
                     {provinces.map(province => (
                       <SelectItem key={province} value={province}>{province}</SelectItem>
                     ))}
@@ -291,7 +320,11 @@ const Products: React.FC = () => {
                     <SelectValue placeholder="Pilih Kota" />
                   </SelectTrigger>
                   <SelectContent>
+fitur-cari-produk
+                    <SelectItem value="all">Semua Kota</SelectItem>
+
                     <SelectItem value="all-cities">Semua Kota</SelectItem>
+main
                     {selectedProvince && cities[selectedProvince as keyof typeof cities]?.map(city => (
                       <SelectItem key={city} value={city}>{city}</SelectItem>
                     ))}
@@ -304,8 +337,12 @@ const Products: React.FC = () => {
                     <SelectValue placeholder="Pilih Kategori" />
                   </SelectTrigger>
                   <SelectContent>
+fitur-cari-produk
+                    {categories.map(category => (
+
                     <SelectItem value="all">Semua Kategori</SelectItem>
                     {categories.filter(c => c !== 'all').map(category => (
+main
                       <SelectItem key={category} value={category}>{category}</SelectItem>
                     ))}
                   </SelectContent>
@@ -319,7 +356,10 @@ const Products: React.FC = () => {
                     <SelectValue placeholder="Rentang Harga" />
                   </SelectTrigger>
                   <SelectContent>
+fitur-cari-produk
+                    <SelectItem value="all">Semua Harga</SelectItem>
                     <SelectItem value="all-prices">Semua Harga</SelectItem>
+main
                     <SelectItem value="0-20000">Dibawah Rp 20.000</SelectItem>
                     <SelectItem value="20000-50000">Rp 20.000 - Rp 50.000</SelectItem>
                     <SelectItem value="50000-100000">Rp 50.000 - Rp 100.000</SelectItem>
@@ -333,7 +373,10 @@ const Products: React.FC = () => {
                     <SelectValue placeholder="Urutkan" />
                   </SelectTrigger>
                   <SelectContent>
+fitur-cari-produk
+                    <SelectItem value="all">Urutan Default</SelectItem>
                     <SelectItem value="default">Urutan Default</SelectItem>
+main
                     <SelectItem value="price-low">Harga Terendah</SelectItem>
                     <SelectItem value="price-high">Harga Tertinggi</SelectItem>
                     <SelectItem value="rating">Rating Tertinggi</SelectItem>
@@ -416,6 +459,16 @@ const Products: React.FC = () => {
                       </Button>
                       
                       {user?.role === 'buyer' ? (
+fitur-cari-produk
+                        <Button
+                          onClick={() => handleAddToCart(product)}
+                          size="sm"
+                          className="flex-1"
+                        >
+                          <ShoppingCart className="h-4 w-4 mr-1" />
+                          Beli
+                        </Button>
+
                         <>
                           <Button
                             onClick={() => handleAddToWishlist(product)}
@@ -433,6 +486,7 @@ const Products: React.FC = () => {
                             Beli
                           </Button>
                         </>
+main
                       ) : (
                         <Button
                           onClick={() => handleAddToCart(product)}
