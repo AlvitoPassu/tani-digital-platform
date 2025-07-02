@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const openWeatherApiKey = Deno.env.get('OPENWEATHER_API_KEY');
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 const supabaseUrl = 'https://kkxhaedaekxosbyzmjit.supabase.co';
-const KINDWISE_API_KEY = '3V7h4q3u32IEUpCVOxNrcFkfIwW4yMZze6qHpmCG0rzk6rDMUn';
+const KINDWISE_API_KEY = Deno.env.get('KINDWISE_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -96,13 +96,6 @@ serve(async (req) => {
     const cropRecommendations = await getCropRecommendationsFromDB(avgTemp, totalRainfall, season, soilType);
     const soilAnalysis = getSoilAnalysis(soilType);
 
-    const responsePayload = {
-      topCrops: cropRecommendations,
-      weatherForecast,
-      soilAnalysis,
-      kindwise: kindwiseData
-    };
-    
     const kindwiseResponse = await fetch('https://api.kindwise.com/v1/crop-health', {
       method: 'POST',
       headers: {
@@ -120,6 +113,13 @@ serve(async (req) => {
     }
 
     const kindwiseData = await kindwiseResponse.json();
+
+    const responsePayload = {
+      topCrops: cropRecommendations,
+      weatherForecast,
+      soilAnalysis,
+      kindwise: kindwiseData
+    };
 
     return new Response(JSON.stringify(responsePayload), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

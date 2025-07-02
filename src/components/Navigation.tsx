@@ -70,9 +70,9 @@ const Navigation = () => {
             <Link to="/" className="text-gray-700 hover:text-green-600 transition-colors">
               Beranda
             </Link>
-            <button type="button" className="text-gray-700 hover:text-green-600 transition-colors">
+            <Link to="/products" className="text-gray-700 hover:text-green-600 transition-colors">
               Kategori
-            </button>
+            </Link>
             <button type="button" className="text-gray-700 hover:text-green-600 transition-colors">
               Promo
             </button>
@@ -183,7 +183,7 @@ const Navigation = () => {
         <div className="md:hidden bg-white border-t border-green-200">
           <div className="px-4 py-2 space-y-2">
             <Link to="/" className="block py-2 text-gray-700 hover:text-green-600">Beranda</Link>
-            <button type="button" className="block py-2 text-gray-700 hover:text-green-600 w-full text-left">Kategori</button>
+            <Link to="/products" className="block py-2 text-gray-700 hover:text-green-600 w-full text-left">Kategori</Link>
             <button type="button" className="block py-2 text-gray-700 hover:text-green-600 w-full text-left">Promo</button>
             {user && (
               <>

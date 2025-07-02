@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+fitur-cari-produk
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import UserManagement from "@/components/UserManagement";
@@ -35,6 +36,9 @@ const AdminDashboard = () => {
     },
   });
 
+const AdminDashboard = () => {
+  const { profile } = useAuth();
+main
   const [stats] = useState({
     totalUsers: 1247,
     totalOrders: 892,
@@ -51,6 +55,7 @@ const AdminDashboard = () => {
     { type: "system", action: "Backup database selesai", time: "15 menit yang lalu" }
   ]);
 
+fitur-cari-produk
   const [showUserManagement, setShowUserManagement] = useState(false);
   const [showAddUser, setShowAddUser] = useState(false);
   const [addUserForm, setAddUserForm] = useState({ name: "", email: "", password: "", role: "buyer" });
@@ -135,6 +140,7 @@ const AdminDashboard = () => {
     XLSX.writeFile(wb, "orders.xlsx");
   };
 
+main
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-slate-50">
       <Navigation />
@@ -156,9 +162,12 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm opacity-90">Total Users</p>
+fitur-cari-produk
                   <p className="text-2xl font-bold">
                     {isUserStatsLoading ? '...' : userStats?.totalUsers?.toLocaleString()}
                   </p>
+                  <p className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</p>
+main
                 </div>
                 <Users className="h-8 w-8" />
               </div>
@@ -213,6 +222,7 @@ const AdminDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
+fitur-cari-produk
               {profile?.role === 'admin' ? (
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
@@ -241,6 +251,30 @@ const AdminDashboard = () => {
                   Akses ditolak. Hanya admin yang dapat mengakses fitur ini.
                 </div>
               )}
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Total Users:</span>
+                  <Badge variant="outline">{stats.totalUsers}</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Petani:</span>
+                  <Badge variant="secondary">847</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">Pembeli:</span>
+                  <Badge variant="secondary">400</Badge>
+                </div>
+                <div className="space-y-2">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                    Kelola Users
+                  </Button>
+                  <Button variant="outline" className="w-full">
+                    Tambah User
+                  </Button>
+                </div>
+              </div>
+main
             </CardContent>
           </Card>
 
@@ -267,10 +301,17 @@ const AdminDashboard = () => {
                   <Badge variant="outline">Rp 8.5M</Badge>
                 </div>
                 <div className="space-y-2">
+fitur-cari-produk
                   <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => setShowOrderManagement(true)}>
                     Lihat Semua Order
                   </Button>
                   <Button variant="outline" className="w-full" onClick={handleExportExcel}>
+
+                  <Button className="w-full bg-green-600 hover:bg-green-700">
+                    Lihat Semua Order
+                  </Button>
+                  <Button variant="outline" className="w-full">
+main
                     Export Data
                   </Button>
                 </div>
@@ -484,6 +525,7 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
+fitur-cari-produk
 
         {/* User Management Modal/Section */}
         {showUserManagement && (
@@ -597,6 +639,7 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
+main
       </div>
     </div>
   );
