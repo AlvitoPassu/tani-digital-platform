@@ -5,9 +5,10 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Search, MapPin, Filter, ShoppingCart, Eye, Heart } from 'lucide-react';
+import { Search, MapPin, Filter, ShoppingCart, Eye } from 'lucide-react';
 import { AuthContext } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
 
 interface Product {
   id: string;
@@ -31,7 +32,7 @@ interface Product {
   isFresh: boolean;
 }
 
-const Products: React.FC = () => {
+const Products: React.FC<{ onFavoriteAdded?: () => void }> = ({ onFavoriteAdded }) => {
   const { user } = useContext(AuthContext);
   const { toast } = useToast();
   
@@ -215,22 +216,6 @@ const Products: React.FC = () => {
     console.log('View product:', product.id);
   };
 
-  const handleAddToWishlist = (product: Product) => {
-    if (user?.role !== 'buyer') {
-      toast({
-        title: "Akses Ditolak",
-        description: "Hanya pembeli yang dapat menambahkan ke wishlist",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    toast({
-      title: "Berhasil",
-      description: `${product.name} ditambahkan ke wishlist`,
-    });
-  };
-
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -276,7 +261,7 @@ const Products: React.FC = () => {
                     <SelectValue placeholder="Pilih Provinsi" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Semua Provinsi</SelectItem>
+                    <SelectItem value="all">Semua Provinsi</SelectItem>
                     {provinces.map(province => (
                       <SelectItem key={province} value={province}>{province}</SelectItem>
                     ))}
@@ -289,7 +274,7 @@ const Products: React.FC = () => {
                     <SelectValue placeholder="Pilih Kota" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Semua Kota</SelectItem>
+                    <SelectItem value="all">Semua Kota</SelectItem>
                     {selectedProvince && cities[selectedProvince as keyof typeof cities]?.map(city => (
                       <SelectItem key={city} value={city}>{city}</SelectItem>
                     ))}
@@ -316,7 +301,7 @@ const Products: React.FC = () => {
                     <SelectValue placeholder="Rentang Harga" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Semua Harga</SelectItem>
+                    <SelectItem value="all">Semua Harga</SelectItem>
                     <SelectItem value="0-20000">Dibawah Rp 20.000</SelectItem>
                     <SelectItem value="20000-50000">Rp 20.000 - Rp 50.000</SelectItem>
                     <SelectItem value="50000-100000">Rp 50.000 - Rp 100.000</SelectItem>
@@ -330,7 +315,7 @@ const Products: React.FC = () => {
                     <SelectValue placeholder="Urutkan" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Urutan Default</SelectItem>
+                    <SelectItem value="all">Urutan Default</SelectItem>
                     <SelectItem value="price-low">Harga Terendah</SelectItem>
                     <SelectItem value="price-high">Harga Tertinggi</SelectItem>
                     <SelectItem value="rating">Rating Tertinggi</SelectItem>
@@ -413,23 +398,14 @@ const Products: React.FC = () => {
                       </Button>
                       
                       {user?.role === 'buyer' ? (
-                        <>
-                          <Button
-                            onClick={() => handleAddToWishlist(product)}
-                            variant="outline"
-                            size="sm"
-                          >
-                            <Heart className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            onClick={() => handleAddToCart(product)}
-                            size="sm"
-                            className="flex-1"
-                          >
-                            <ShoppingCart className="h-4 w-4 mr-1" />
-                            Beli
-                          </Button>
-                        </>
+                        <Button
+                          onClick={() => handleAddToCart(product)}
+                          size="sm"
+                          className="flex-1"
+                        >
+                          <ShoppingCart className="h-4 w-4 mr-1" />
+                          Beli
+                        </Button>
                       ) : (
                         <Button
                           onClick={() => handleAddToCart(product)}

@@ -63,6 +63,7 @@ const SearchResults = () => {
     inStock: false,
     sortBy: 'relevance'
   });
+  const [favoriteProductIds, setFavoriteProductIds] = useState<number[]>([]);
 
   const categories = [
     { id: 1, name: "Bibit & Benih", icon: "🌱" },
@@ -269,6 +270,29 @@ const SearchResults = () => {
       searchProducts();
     }
   }, [query, filters]);
+
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('favorites')
+        .select('product_id')
+        .eq('user_id', user.id);
+      if (data) setFavoriteProductIds(data.map(fav => fav.product_id));
+    };
+    fetchFavorites();
+  }, [user]);
+
+  const handleToggleFavorite = async (productId: number) => {
+    if (!user) return;
+    if (favoriteProductIds.includes(productId)) {
+      await supabase.from('favorites').delete().eq('user_id', user.id).eq('product_id', productId);
+      setFavoriteProductIds(favoriteProductIds.filter(id => id !== productId));
+    } else {
+      await supabase.from('favorites').insert([{ user_id: user.id, product_id: productId }]);
+      setFavoriteProductIds([...favoriteProductIds, productId]);
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -524,6 +548,8 @@ const SearchResults = () => {
                         badge: product.badge || "New",
                         isDiscount: product.isDiscount || false
                       }}
+                      isFavorite={favoriteProductIds.includes(product.id)}
+                      onToggleFavorite={handleToggleFavorite}
                     />
                   ))}
                 </div>

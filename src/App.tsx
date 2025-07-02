@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import SearchResults from "./pages/SearchResults";
 import MyStore from "./pages/my-store";
 import AddProduct from "./pages/add-product";
+import Products from "./pages/Products";
 
 const queryClient = new QueryClient();
 
@@ -118,6 +119,7 @@ const App = () => (
               } 
             />
             <Route path="/search" element={<SearchResults />} />
+            <Route path="/products" element={<Products />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

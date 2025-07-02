@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart, Package, MessageCircle, Heart, Star, TrendingUp, CreditCard, Truck, Clock, MapPin, Filter, Search } from "lucide-react";
@@ -6,9 +6,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const BuyerDashboard = () => {
   const { profile } = useAuth();
+  const navigate = useNavigate();
   const [recentOrders] = useState([
     {
       id: "ORD-001",
@@ -27,12 +30,7 @@ const BuyerDashboard = () => {
       delivered: "2024-01-12"
     }
   ]);
-
-  const [favoriteProducts] = useState([
-    { name: "Cabai Merah Segar", price: 25000, rating: 4.8, image: "🌶️" },
-    { name: "Tomat Organik", price: 18000, rating: 4.9, image: "🍅" },
-    { name: "Kentang Premium", price: 22000, rating: 4.7, image: "🥔" }
-  ]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -115,13 +113,28 @@ const BuyerDashboard = () => {
                 Cari dan beli produk pertanian segar dari petani lokal
               </p>
               <div className="space-y-2">
-                <Button className="w-full bg-green-600 hover:bg-green-700">
+                <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => navigate("/")}>
                   Mulai Belanja
                 </Button>
-                <Button variant="outline" className="w-full">
-                  <Search className="h-4 w-4 mr-2" />
-                  Cari Produk
-                </Button>
+                <form
+                  onSubmit={e => {
+                    e.preventDefault();
+                    if (searchQuery.trim()) navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                  }}
+                  className="flex gap-2"
+                >
+                  <input
+                    type="text"
+                    placeholder="Cari produk..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="flex-1 border rounded px-3 py-2"
+                  />
+                  <Button type="submit" variant="outline">
+                    <Search className="h-4 w-4 mr-2" />
+                    Cari Produk
+                  </Button>
+                </form>
               </div>
             </CardContent>
           </Card>
@@ -154,36 +167,6 @@ const BuyerDashboard = () => {
                 ))}
                 <Button variant="outline" className="w-full">
                   Lihat Semua Order
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Produk Favorit */}
-          <Card className="hover:shadow-lg transition-all duration-300 border-pink-200 bg-white">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Heart className="h-5 w-5 text-pink-600" />
-                Produk Favorit
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {favoriteProducts.map((product, index) => (
-                  <div key={index} className="flex items-center gap-3 p-2 border rounded-lg">
-                    <span className="text-2xl">{product.image}</span>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{product.name}</p>
-                      <p className="text-xs text-gray-600">Rp {product.price.toLocaleString()}</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      <span className="text-xs">{product.rating}</span>
-                    </div>
-                  </div>
-                ))}
-                <Button variant="outline" className="w-full">
-                  Lihat Semua Favorit
                 </Button>
               </div>
             </CardContent>

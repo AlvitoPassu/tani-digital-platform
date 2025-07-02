@@ -270,6 +270,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       console.log('Sign up response:', { data, error });
 
+      if (!error && data.user) {
+        // Insert profile ke tabel profiles
+        const { error: profileError } = await supabase.from('profiles').insert({
+          id: data.user.id,
+          name,
+          role
+        });
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+        }
+      }
+
       if (error) {
         console.error('Sign up error:', error);
         toast({
