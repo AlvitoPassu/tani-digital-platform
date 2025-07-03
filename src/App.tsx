@@ -11,22 +11,16 @@ import FarmerDashboard from "./pages/FarmerDashboard";
 import BuyerDashboard from "./pages/BuyerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AIAssistantDashboard from "./pages/AIAssistantDashboard";
-fitur-cari-produk
-
 import FarmerTools from "./pages/FarmerTools";
 import AdminPanel from "./pages/AdminPanel";
-main
 import Auth from "./pages/Auth";
 import Cart from "./pages/Cart";
 import NotFound from "./pages/NotFound";
 import SearchResults from "./pages/SearchResults";
-fitur-cari-produk
 import MyStore from "./pages/my-store";
 import AddProduct from "./pages/add-product";
-
 import Checkout from "./pages/Checkout";
 import CategoryDashboard from "./pages/CategoryDashboard";
-main
 import Products from "./pages/Products";
 
 const queryClient = new QueryClient();
@@ -129,8 +123,6 @@ const App = () => (
               } 
             />
             <Route path="/search" element={<SearchResults />} />
-fitur-cari-produk
-
             <Route 
               path="/checkout" 
               element={
@@ -147,7 +139,6 @@ fitur-cari-produk
                 </ProtectedRoute>
               } 
             />
-main
             <Route path="/products" element={<Products />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
