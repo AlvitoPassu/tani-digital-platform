@@ -118,9 +118,9 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
-            <Route path="/search" element={<SearchResults />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="*" element={<NotFound />} />
+                          <Route path="/search" element={<SearchResults />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
