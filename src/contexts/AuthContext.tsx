@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, isSupabaseAvailable } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { clearSupabaseSession } from '@/lib/utils';
 
@@ -10,7 +10,6 @@ export interface Profile {
   id: string;
   name: string | null;
   role: UserRole;
-  phone_number: string | null;
   address: string | null;
   created_at: string;
   updated_at: string;
@@ -37,6 +36,35 @@ export const useAuth = () => {
   return context;
 };
 
+// Local storage auth management
+const AUTH_STORAGE_KEY = 'tani_digital_auth';
+
+const getLocalAuth = () => {
+  try {
+    const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch (error) {
+    console.error('Error reading auth from localStorage:', error);
+    return null;
+  }
+};
+
+const setLocalAuth = (authData: any) => {
+  try {
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
+  } catch (error) {
+    console.error('Error saving auth to localStorage:', error);
+  }
+};
+
+const clearLocalAuth = () => {
+  try {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+  } catch (error) {
+    console.error('Error clearing auth from localStorage:', error);
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -51,61 +79,91 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Function to clear invalid session
   const clearInvalidSession = async () => {
     try {
+fitur-cari-produk
       console.log('Clearing invalid session...');
       await supabase.auth.signOut();
+
+      if (isSupabaseAvailable() && supabase) {
+        await supabase.auth.signOut();
+      }
+main
       setUser(null);
       setProfile(null);
       setSession(null);
       lastFetchedUserId.current = null;
+fitur-cari-produk
       
       // Clear localStorage using utility function
       clearSupabaseSession();
       
+      clearSupabaseSession();
+      clearLocalAuth();
+main
       toast({
         title: "Session Diperbarui",
         description: "Silakan login kembali untuk melanjutkan.",
       });
     } catch (error) {
+fitur-cari-produk
       console.error('Error clearing session:', error);
+
+      // Optional: log error
+main
     }
   };
 
   const fetchProfile = async (userId: string) => {
-    // Prevent multiple simultaneous fetches for the same user
     if (fetchingProfile.current || lastFetchedUserId.current === userId) {
+      return;
+    }
+    
+    // If Supabase is not available, use local auth
+    if (!isSupabaseAvailable() || !supabase) {
+      const localAuth = getLocalAuth();
+      if (localAuth && localAuth.user && localAuth.profile) {
+        setUser(localAuth.user);
+        setProfile(localAuth.profile);
+        setSession(localAuth.session);
+        lastFetchedUserId.current = userId;
+      }
       return;
     }
 
     try {
       fetchingProfile.current = true;
       lastFetchedUserId.current = userId;
-      
-      console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
-      
       if (error) {
-        console.error('Error fetching profile:', error);
         return;
       }
-      
       if (data) {
         const profileData: Profile = {
           ...data,
           role: data.role as UserRole
         };
-        console.log('Profile fetched successfully:', profileData);
         setProfile(profileData);
       } else {
-        console.log('No profile found for user:', userId);
-        // Try to create profile from user metadata
         await createProfileFromUser(userId);
       }
     } catch (error) {
-      console.error('Error in fetchProfile:', error);
+      toast({
+        title: "Peringatan",
+        description: "Profile user tidak ditemukan di database, dibuat default. Mohon cek trigger Supabase.",
+        variant: "destructive"
+      });
+      const defaultProfile: Profile = {
+        id: userId,
+        name: 'User',
+        role: 'buyer',
+        address: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      setProfile(defaultProfile);
     } finally {
       fetchingProfile.current = false;
     }
@@ -113,9 +171,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const createProfileFromUser = async (userId: string) => {
     try {
-      console.log('Attempting to create default profile for user:', userId);
-      
-      // Create a default profile with buyer role
+      if (!isSupabaseAvailable() || !supabase) {
+        const defaultProfile: Profile = {
+          id: userId,
+          name: 'User',
+          role: 'buyer',
+          address: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        setProfile(defaultProfile);
+        return;
+      }
+
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .insert({
@@ -125,15 +193,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         })
         .select()
         .single();
-
       if (profileError) {
-        console.error('Error creating profile:', profileError);
-        // If profile creation fails, set a default profile in state
+        toast({
+          title: "Peringatan",
+          description: "Profile user tidak ditemukan di database, dibuat default. Mohon cek trigger Supabase.",
+          variant: "destructive"
+        });
         const defaultProfile: Profile = {
           id: userId,
           name: 'User',
           role: 'buyer',
-          phone_number: null,
           address: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -141,23 +210,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile(defaultProfile);
         return;
       }
-
       if (profileData) {
         const newProfile: Profile = {
           ...profileData,
           role: profileData.role as UserRole
         };
-        console.log('Profile created successfully:', newProfile);
         setProfile(newProfile);
       }
     } catch (error) {
-      console.error('Error in createProfileFromUser:', error);
-      // Set default profile even if creation fails
+      toast({
+        title: "Peringatan",
+        description: "Profile user tidak ditemukan di database, dibuat default. Mohon cek trigger Supabase.",
+        variant: "destructive"
+      });
       const defaultProfile: Profile = {
         id: userId,
         name: 'User',
         role: 'buyer',
-        phone_number: null,
         address: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -168,15 +237,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let isMounted = true;
-    
-    console.log('Setting up auth state listener...');
-    
-    // Set up auth state listener
+
+    // If Supabase is not available, use local auth
+    if (!isSupabaseAvailable() || !supabase) {
+      const localAuth = getLocalAuth();
+      if (localAuth) {
+        setUser(localAuth.user);
+        setProfile(localAuth.profile);
+        setSession(localAuth.session);
+        lastFetchedUserId.current = localAuth.user?.id || null;
+      }
+      setLoading(false);
+      return;
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email || 'no user');
-        
         if (!isMounted) return;
+fitur-cari-produk
         
         // Handle token refresh errors
         if (event === 'TOKEN_REFRESHED' && !session) {
@@ -185,11 +263,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
         
+
+main
         setSession(session);
         setUser(session?.user ?? null);
-        
         if (session?.user) {
-          // Only fetch profile if user changed or profile is null
           if (lastFetchedUserId.current !== session.user.id || !profile) {
             await fetchProfile(session.user.id);
           }
@@ -197,13 +275,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setProfile(null);
           lastFetchedUserId.current = null;
         }
+fitur-cari-produk
+
+        setLoading(false);
+main
       }
     );
-
-    // Get initial session
+    
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
+fitur-cari-produk
         
         if (error) {
           console.error('Error getting session:', error);
@@ -216,13 +298,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           console.log('Initial session check:', session?.user?.email || 'no session');
           
+main
           if (isMounted) {
             setSession(session);
             setUser(session?.user ?? null);
-            
             if (session?.user) {
               await fetchProfile(session.user.id);
             }
+fitur-cari-produk
           }
         }
       } catch (error) {
@@ -237,14 +320,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await clearInvalidSession();
         }
       } finally {
+            setLoading(false);
+        }
+      } catch (error) {
+main
         if (isMounted) {
           setLoading(false);
         }
       }
     };
-
     getInitialSession();
-
     return () => {
       isMounted = false;
       subscription.unsubscribe();
@@ -253,9 +338,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, name: string, role: UserRole) => {
     try {
-      console.log('Attempting to sign up with email:', email);
+      if (!isSupabaseAvailable() || !supabase) {
+        // Create local user for demo purposes
+        const demoUser: User = {
+          id: `local_${Date.now()}`,
+          email,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          aud: 'authenticated',
+          role: 'authenticated',
+          app_metadata: {},
+          user_metadata: { name, role },
+          identities: [],
+          factors: []
+        };
+        
+        const demoProfile: Profile = {
+          id: demoUser.id,
+          name,
+          role,
+          address: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        const demoSession: Session = {
+          access_token: 'demo_token',
+          refresh_token: 'demo_refresh',
+          expires_in: 3600,
+          expires_at: Math.floor(Date.now() / 1000) + 3600,
+          token_type: 'bearer',
+          user: demoUser
+        };
+
+        setUser(demoUser);
+        setProfile(demoProfile);
+        setSession(demoSession);
+        
+        setLocalAuth({ user: demoUser, profile: demoProfile, session: demoSession });
+        
+        toast({
+          title: "Registrasi Berhasil",
+          description: "Akun demo berhasil dibuat (mode offline)",
+        });
+        
+        return { error: null };
+      }
+
       const redirectUrl = `${window.location.origin}/`;
-      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -267,6 +397,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
       });
+fitur-cari-produk
 
       console.log('Sign up response:', { data, error });
 
@@ -282,34 +413,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
+main
       if (error) {
-        console.error('Sign up error:', error);
         toast({
           title: "Error Registrasi",
           description: error.message,
-          variant: "destructive"
+          variant: "destructive",
         });
-      } else {
-        if (data.user && !data.user.email_confirmed_at) {
-          toast({
-            title: "Registrasi Berhasil",
-            description: "Silakan cek email Anda untuk konfirmasi akun.",
-          });
-        } else {
-          toast({
-            title: "Registrasi Berhasil",
-            description: "Akun Anda berhasil dibuat!",
-          });
-        }
+        return { error };
       }
-
-      return { error };
-    } catch (error: any) {
-      console.error('Sign up catch error:', error);
       toast({
-        title: "Error",
+        title: "Registrasi Berhasil",
+        description: "Silakan cek email Anda untuk verifikasi.",
+      });
+      return { error: null };
+    } catch (error) {
+      toast({
+        title: "Error Registrasi",
         description: "Terjadi kesalahan saat registrasi.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return { error };
     }
@@ -317,37 +439,75 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log('Attempting to sign in with email:', email);
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      if (!isSupabaseAvailable() || !supabase) {
+        // For demo purposes, allow any email/password combination
+        const demoUser: User = {
+          id: `local_${Date.now()}`,
+          email,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          aud: 'authenticated',
+          role: 'authenticated',
+          app_metadata: {},
+          user_metadata: { name: 'Demo User', role: 'buyer' },
+          identities: [],
+          factors: []
+        };
+        
+        const demoProfile: Profile = {
+          id: demoUser.id,
+          name: 'Demo User',
+          role: 'buyer',
+          address: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
 
-      console.log('Sign in response:', { data, error });
+        const demoSession: Session = {
+          access_token: 'demo_token',
+          refresh_token: 'demo_refresh',
+          expires_in: 3600,
+          expires_at: Math.floor(Date.now() / 1000) + 3600,
+          token_type: 'bearer',
+          user: demoUser
+        };
 
-      if (error) {
-        console.error('Sign in error:', error);
-        toast({
-          title: "Login Gagal",
-          description: "Email atau password salah.",
-          variant: "destructive"
-        });
-      } else {
-        console.log('Login successful for user:', data.user?.email);
+        setUser(demoUser);
+        setProfile(demoProfile);
+        setSession(demoSession);
+        
+        setLocalAuth({ user: demoUser, profile: demoProfile, session: demoSession });
+        
         toast({
           title: "Login Berhasil",
-          description: "Selamat datang di AgroMart!",
+          description: "Selamat datang di Tani Digital Platform (mode demo)",
         });
+        
+        return { error: null };
       }
 
-      return { error };
-    } catch (error: any) {
-      console.error('Sign in catch error:', error);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) {
+        toast({
+          title: "Error Login",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
       toast({
-        title: "Error",
+        title: "Login Berhasil",
+        description: "Selamat datang kembali!",
+      });
+      return { error: null };
+    } catch (error) {
+      toast({
+        title: "Error Login",
         description: "Terjadi kesalahan saat login.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return { error };
     }
@@ -355,6 +515,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
+fitur-cari-produk
       console.log('Signing out...');
       const { error } = await supabase.auth.signOut();
       if (error) {
@@ -374,17 +535,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           title: "Logout Berhasil",
           description: "Anda telah keluar dari akun",
         });
+      if (isSupabaseAvailable() && supabase) {
+        await supabase.auth.signOut();
+main
       }
-    } catch (error: any) {
-      console.error('Sign out catch error:', error);
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      lastFetchedUserId.current = null;
+      clearLocalAuth();
       toast({
-        title: "Error",
+        title: "Logout Berhasil",
+        description: "Anda telah keluar dari aplikasi.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error Logout",
         description: "Terjadi kesalahan saat logout.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
+fitur-cari-produk
   const value = {
     user,
     profile,
@@ -396,9 +569,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearInvalidSession
   };
 
+main
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{
+      user,
+      profile,
+      session,
+      loading,
+      signUp,
+      signIn,
+      signOut,
+      clearInvalidSession,
+    }}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+export async function signUpWithProfile(email: string, password: string, role: string) {
+  // 1. Sign up user
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  // 2. Insert profile jika sign up berhasil
+  // Tunggu user.id dari hasil sign up
+  const user = data.user;
+  if (user) {
+    const { error: profileError } = await supabase.from('profiles').insert([
+      {
+        id: user.id,      // id user dari Supabase Auth
+        email: user.email,
+        role: role,       // role yang dipilih user saat sign up
+      },
+    ]);
+    if (profileError) {
+      throw profileError;
+    }
+  }
+
+  return data;
+}

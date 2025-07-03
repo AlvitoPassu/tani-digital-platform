@@ -92,6 +92,12 @@ const Dashboard = () => {
                       case 'admin':
                         navigate('/admin-dashboard');
                         break;
+fitur-cari-produk
+
+                      default:
+                        // fallback
+                        break;
+main
                     }
                   }}
                 >

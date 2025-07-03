@@ -1,12 +1,11 @@
 import { useState, useRef } from "react";
-import { Search, ShoppingCart, User, Bell, Menu, Leaf, Truck, Shield, Star } from "lucide-react";
+import { Search, ShoppingCart, User, Bell, Menu, Leaf, Truck, Shield, Star, MapPin, BadgeDollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProductCard from "@/components/ProductCard";
 import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
-import CategorySection from "@/components/CategorySection";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import StatsSection from "@/components/StatsSection";
 import { useNavigate } from "react-router-dom";
@@ -59,54 +58,70 @@ const Index = () => {
           onSubmit={handleSearchSubmit}
         />
         <StatsSection />
-        <CategorySection selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
 
         {/* Filter Bar */}
-        <div className="max-w-6xl mx-auto mb-8 flex flex-col md:flex-row gap-4 items-center px-4">
-          {/* Filter Harga */}
-          <div className="flex items-center gap-2">
-            <span className="font-medium">Harga:</span>
-            <input
-              type="number"
-              min={0}
-              max={priceRange[1]}
-              value={priceRange[0]}
-              onChange={e => setPriceRange([Number(e.target.value), priceRange[1]])}
-              className="w-20 px-2 py-1 border rounded"
-              placeholder="Min"
-            />
-            <span>-</span>
-            <input
-              type="number"
-              min={priceRange[0]}
-              max={2000000}
-              value={priceRange[1]}
-              onChange={e => setPriceRange([priceRange[0], Number(e.target.value)])}
-              className="w-20 px-2 py-1 border rounded"
-              placeholder="Max"
-            />
+        <div className="max-w-6xl mx-auto mb-8 px-4">
+          <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col md:flex-row md:items-end gap-6 border border-gray-200">
+            {/* Filter Harga */}
+            <div className="flex flex-col w-full md:w-1/3">
+              <label className="text-xs font-bold text-gray-600 mb-1" htmlFor="min-price">Harga</label>
+              <div className="flex items-center gap-2 relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                  <BadgeDollarSign className="h-4 w-4" />
+                </span>
+                <input
+                  id="min-price"
+                  type="number"
+                  min={0}
+                  max={priceRange[1]}
+                  value={priceRange[0]}
+                  onChange={e => setPriceRange([Number(e.target.value), priceRange[1]])}
+                  className="w-28 pl-9 pr-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-300 text-base"
+                  placeholder="Min"
+                />
+                <span className="text-gray-400 font-bold">-</span>
+                <input
+                  id="max-price"
+                  type="number"
+                  min={priceRange[0]}
+                  max={2000000}
+                  value={priceRange[1]}
+                  onChange={e => setPriceRange([priceRange[0], Number(e.target.value)])}
+                  className="w-28 pl-9 pr-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-300 text-base"
+                  placeholder="Maks"
+                />
+              </div>
+            </div>
+            {/* Filter Lokasi */}
+            <div className="flex flex-col w-full md:w-1/3">
+              <label className="text-xs font-bold text-gray-600 mb-1" htmlFor="location">Lokasi</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                  <MapPin className="h-4 w-4" />
+                </span>
+                <select
+                  id="location"
+                  value={selectedLocation || "Semua"}
+                  onChange={e => setSelectedLocation(e.target.value === "Semua" ? null : e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-300 text-base appearance-none"
+                >
+                  {locations.map(loc => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            {/* Reset Filter Button */}
+            <div className="flex-1 flex md:justify-end items-end mt-4 md:mt-0">
+              <button
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded-lg font-bold shadow transition text-base"
+                onClick={resetFilter}
+                type="button"
+              >
+                Reset Filter
+              </button>
+            </div>
           </div>
-          {/* Filter Lokasi */}
-          <div className="flex items-center gap-2">
-            <span className="font-medium">Lokasi:</span>
-            <select
-              value={selectedLocation || "Semua"}
-              onChange={e => setSelectedLocation(e.target.value === "Semua" ? null : e.target.value)}
-              className="px-2 py-1 border rounded"
-            >
-              {locations.map(loc => (
-                <option key={loc} value={loc}>{loc}</option>
-              ))}
-            </select>
-          </div>
-          {/* Reset Filter Button */}
-          <button
-            className="ml-auto bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded font-semibold"
-            onClick={resetFilter}
-            type="button"
-          >
-            Reset Filter
-          </button>
         </div>
 
         {/* Produk Section dengan ref */}
